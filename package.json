@@ -12,8 +12,6 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.21.1",
     "mongoose": "^8.7.2",
     "mysql2": "^3.11.3"
   },
@@ -21,7 +19,13 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/morgan": "^1.9.9",
+    "@types/mssql": "^9.1.5",
+    "@types/node": "^22.7.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
     "morgan": "^1.10.0",
+    "mssql": "^11.0.1",
     "nodemon": "^3.1.7"
   }
 }
