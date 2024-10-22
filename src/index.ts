@@ -10,6 +10,8 @@ import usuarioRoutes from './routes/usuario-route';
 import servicioRoutes  from './routes/servicio-route';
 import especialidadRoutes  from './routes/especialidad-route';
 import agendaRoutes from './routes/agenda-route';
+import registerRoutes from './routes/register-routes';
+import loginRoutes from './routes/login-routes';
 
 class Server {
     public app: Application; 
@@ -18,11 +20,12 @@ class Server {
         this.app = express();
         this.config();
         this.routes();
-        this.connectToDatabase(); // Conectar a la base de datos
+        this.connectToDatabase();
     }
 
     config(): void {
         this.app.set('port', process.env.PORT || 3000);
+        this.app.use(cors());
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: false }));
         this.app.use(morgan('dev'));
@@ -43,14 +46,7 @@ class Server {
         this.app.get('/', (req, res) => {
             res.send('¡Hola, mundo!');
         });
-        this.app.use('/roles', rolRoutes); 
-        this.app.use('/empleados', empleadoRoutes); 
-        this.app.use('/clientes', clienteRoutes); 
-        this.app.use('/citas', citaRoutes); 
-        this.app.use('/usuarios', usuarioRoutes);
-        this.app.use('/servicios', servicioRoutes);
-        this.app.use('/especialidades', especialidadRoutes);
-        this.app.use('/agendas', agendaRoutes);
+        this.app.use('/roles', rolRoutes); // Aquí es donde se usa el router
     }
 
     start(): void {
@@ -60,6 +56,5 @@ class Server {
     }
 }
 
-// Inicializa el servidor
 const server = new Server();
 server.start();

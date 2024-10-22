@@ -24,15 +24,20 @@ const usuario_route_1 = __importDefault(require("./routes/usuario-route"));
 const servicio_route_1 = __importDefault(require("./routes/servicio-route"));
 const especialidad_route_1 = __importDefault(require("./routes/especialidad-route"));
 const agenda_route_1 = __importDefault(require("./routes/agenda-route"));
+const db_1 = require("./config/db");
+const rol_routes_1 = __importDefault(require("./routes/rol-routes"));
+const register_routes_1 = __importDefault(require("./routes/register-routes"));
+const login_routes_1 = __importDefault(require("./routes/login-routes"));
 class Server {
     constructor() {
         this.app = (0, express_1.default)();
         this.config();
         this.routes();
-        this.connectToDatabase(); // Conectar a la base de datos
+        this.connectToDatabase();
     }
     config() {
         this.app.set('port', process.env.PORT || 3000);
+        this.app.use((0, cors_1.default)());
         this.app.use(express_1.default.json());
         this.app.use(express_1.default.urlencoded({ extended: false }));
         this.app.use((0, morgan_1.default)('dev'));
@@ -54,14 +59,7 @@ class Server {
         this.app.get('/', (req, res) => {
             res.send('¡Hola, mundo!');
         });
-        this.app.use('/roles', rol_route_1.default);
-        this.app.use('/empleados', empleado_route_1.default);
-        this.app.use('/clientes', cliente_route_1.default);
-        this.app.use('/citas', cita_route_1.default);
-        this.app.use('/usuarios', usuario_route_1.default);
-        this.app.use('/servicios', servicio_route_1.default);
-        this.app.use('/especialidades', especialidad_route_1.default);
-        this.app.use('/agendas', agenda_route_1.default);
+        this.app.use('/roles', rol_routes_1.default); // Aquí es donde se usa el router
     }
     start() {
         this.app.listen(this.app.get('port'), () => {
@@ -69,6 +67,5 @@ class Server {
         });
     }
 }
-// Inicializa el servidor
 const server = new Server();
 server.start();
