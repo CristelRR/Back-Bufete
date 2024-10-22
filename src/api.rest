@@ -6,3 +6,6 @@
 
 /CITAS/ 
 ### Consultar todos los EMPLEADOS GET http://localhost:3000/citas
+/CITA/ 
+### Consultar todas las CITAS GET http://localhost:3000/roles
+### Consultar todas las CITAS GET http://localhost:3000/login

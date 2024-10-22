@@ -16,6 +16,11 @@ const express_1 = __importDefault(require("express"));
 const morgan_1 = __importDefault(require("morgan"));
 const cors_1 = __importDefault(require("cors"));
 const db_1 = require("./config/db");
+const rol_routes_1 = __importDefault(require("./routes/rol-routes"));
+const register_routes_1 = __importDefault(require("./routes/register-routes"));
+const login_routes_1 = __importDefault(require("./routes/login-routes"));
+const cors_1 = __importDefault(require("cors"));
+const db_1 = require("./config/db");
 const rol_route_1 = __importDefault(require("./routes/rol-route"));
 const empleado_route_1 = __importDefault(require("./routes/empleado-route"));
 const cita_route_1 = __importDefault(require("./routes/cita-route"));
@@ -25,9 +30,6 @@ const servicio_route_1 = __importDefault(require("./routes/servicio-route"));
 const especialidad_route_1 = __importDefault(require("./routes/especialidad-route"));
 const agenda_route_1 = __importDefault(require("./routes/agenda-route"));
 const db_1 = require("./config/db");
-const rol_routes_1 = __importDefault(require("./routes/rol-routes"));
-const register_routes_1 = __importDefault(require("./routes/register-routes"));
-const login_routes_1 = __importDefault(require("./routes/login-routes"));
 const empleado_routes_1 = __importDefault(require("./routes/empleado-routes"));
 const upload_file_routes_1 = __importDefault(require("./routes/upload-file-routes"));
 class Server {
@@ -39,6 +41,7 @@ class Server {
     }
     config() {
         this.app.set('port', process.env.PORT || 3000);
+        this.app.use((0, cors_1.default)());
         this.app.use((0, cors_1.default)());
         this.app.use(express_1.default.json());
         this.app.use(express_1.default.urlencoded({ extended: false }));
@@ -61,6 +64,9 @@ class Server {
         this.app.get('/', (req, res) => {
             res.send('¡Hola, mundo!');
         });
+        this.app.use('/roles', rol_routes_1.default);
+        this.app.use('/register', register_routes_1.default);
+        this.app.use('/login', login_routes_1.default);
         this.app.use('/roles', rol_routes_1.default);
         this.app.use('/empleados', empleado_routes_1.default);
         this.app.use('/register', register_routes_1.default);

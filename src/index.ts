@@ -15,6 +15,7 @@ import registerRoutes from './routes/register-routes';
 import loginRoutes from './routes/login-routes';
 import expedienteRoutes from './routes/upload-file-routes';
 
+
 class Server {
     public app: Application;
 
@@ -28,6 +29,7 @@ class Server {
     config(): void {
         this.app.set('port', process.env.PORT || 3000);
         this.app.use(cors({ origin: 'http://localhost:4200' })); //Habilitado para cors
+        this.app.use(cors());
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: false }));
         this.app.use(morgan('dev'));
@@ -58,6 +60,9 @@ class Server {
         this.app.use('/register', registerRoutes);
         this.app.use('/login', loginRoutes);
         this.app.use('/expedientes', expedienteRoutes);
+        this.app.use('/roles', rolRoutes);
+        this.app.use('/register', registerRoutes);
+        this.app.use('/login', loginRoutes);
     }
 
     start(): void {
