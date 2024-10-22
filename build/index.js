@@ -14,17 +14,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const morgan_1 = __importDefault(require("morgan"));
-const db_1 = require("./config/db"); // Asegúrate de que esta ruta sea correcta
-const rol_routes_1 = __importDefault(require("./routes/rol-routes")); // Ajusta la ruta según la ubicación
+const cors_1 = __importDefault(require("cors"));
+const db_1 = require("./config/db");
+const rol_routes_1 = __importDefault(require("./routes/rol-routes"));
+const register_routes_1 = __importDefault(require("./routes/register-routes"));
+const login_routes_1 = __importDefault(require("./routes/login-routes"));
 class Server {
     constructor() {
         this.app = (0, express_1.default)();
         this.config();
         this.routes();
-        this.connectToDatabase(); // Conectar a la base de datos
+        this.connectToDatabase();
     }
     config() {
         this.app.set('port', process.env.PORT || 3000);
+        this.app.use((0, cors_1.default)());
         this.app.use(express_1.default.json());
         this.app.use(express_1.default.urlencoded({ extended: false }));
         this.app.use((0, morgan_1.default)('dev'));
@@ -45,7 +49,9 @@ class Server {
         this.app.get('/', (req, res) => {
             res.send('¡Hola, mundo!');
         });
-        this.app.use('/roles', rol_routes_1.default); // Aquí es donde se usa el router
+        this.app.use('/roles', rol_routes_1.default);
+        this.app.use('/register', register_routes_1.default);
+        this.app.use('/login', login_routes_1.default);
     }
     start() {
         this.app.listen(this.app.get('port'), () => {
@@ -53,6 +59,5 @@ class Server {
         });
     }
 }
-// Inicializa el servidor
 const server = new Server();
 server.start();

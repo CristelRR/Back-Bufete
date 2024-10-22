@@ -1,7 +1,10 @@
 import express, { Application } from 'express';
 import morgan from 'morgan';
-import { connectDB } from './config/db'; // Asegúrate de que esta ruta sea correcta
-import rolRoutes from './routes/rol-routes'; // Ajusta la ruta según la ubicación
+import cors from 'cors';
+import { connectDB } from './config/db';
+import rolRoutes from './routes/rol-routes';
+import registerRoutes from './routes/register-routes';
+import loginRoutes from './routes/login-routes';
 
 class Server {
     public app: Application;
@@ -10,11 +13,12 @@ class Server {
         this.app = express();
         this.config();
         this.routes();
-        this.connectToDatabase(); // Conectar a la base de datos
+        this.connectToDatabase();
     }
 
     config(): void {
         this.app.set('port', process.env.PORT || 3000);
+        this.app.use(cors());
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: false }));
         this.app.use(morgan('dev'));
@@ -34,7 +38,9 @@ class Server {
         this.app.get('/', (req, res) => {
             res.send('¡Hola, mundo!');
         });
-        this.app.use('/roles', rolRoutes); // Aquí es donde se usa el router
+        this.app.use('/roles', rolRoutes);
+        this.app.use('/register', registerRoutes);
+        this.app.use('/login', loginRoutes);
     }
 
     start(): void {
@@ -44,6 +50,5 @@ class Server {
     }
 }
 
-// Inicializa el servidor
 const server = new Server();
 server.start();
