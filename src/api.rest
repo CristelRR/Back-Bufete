@@ -1,6 +1,6 @@
 /**ROLES**/ 
 ### Consultar todas los ROLES GET http://localhost:3000/roles
-
+### Consultar todas las CITAS GET http://localhost:3000/login
 /EMPLEADOS/ 
 ### Consultar todos los EMPLEADOS GET http://localhost:3000/empleados
 

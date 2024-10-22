@@ -11,6 +11,8 @@ import servicioRoutes  from './routes/servicio-route';
 import especialidadRoutes  from './routes/especialidad-route';
 import pagoRoutes from './routes/gestionPago-route';
 import agendaRoutes from './routes/agenda-route';
+import registerRoutes from './routes/register-routes';
+import loginRoutes from './routes/login-routes';
 
 class Server {
     public app: Application;
@@ -19,7 +21,7 @@ class Server {
         this.app = express();
         this.config();
         this.routes();
-        this.connectToDatabase(); // Conectar a la base de datos
+        this.connectToDatabase();
     }
 
     config(): void {
@@ -45,6 +47,7 @@ class Server {
         this.app.get('/', (req, res) => {
             res.send('¡Hola, mundo!');
         });
+        this.app.use('/roles', rolRoutes); // Aquí es donde se usa el router
         this.app.use('/roles', rolRoutes); 
         this.app.use('/empleados', empleadoRoutes); 
         this.app.use('/clientes', clienteRoutes); 
@@ -65,6 +68,5 @@ class Server {
     }
 }
 
-// Inicializa el servidor
 const server = new Server();
 server.start();
