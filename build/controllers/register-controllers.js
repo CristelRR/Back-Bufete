@@ -33,15 +33,13 @@ class RegisterController {
     }
     registerUser(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            // Ajustamos los nombres de las propiedades que se esperan recibir
-            const { nombreUsuario, pass, idRolFK } = req.body; // Cambiado de IdRol a idRolFK
-            if (!nombreUsuario || !pass || idRolFK === undefined) { // Verificamos que idRolFK esté definido
+            const { nombreUsuario, pass, idRolFK } = req.body;
+            if (!nombreUsuario || !pass || idRolFK === undefined) {
                 res.status(400).json({ message: 'Faltan datos de usuario, contraseña o rol.' });
                 return;
             }
             try {
                 const pool = yield (0, db_1.connectDB)();
-                // Verificamos si el usuario ya existe
                 const existingUser = yield pool.request()
                     .input('username', mssql_1.default.VarChar, nombreUsuario)
                     .query('SELECT * FROM tblUsuario WHERE nombreUsuario = @username');
@@ -49,13 +47,11 @@ class RegisterController {
                     res.status(400).json({ message: 'El usuario ya existe.' });
                     return;
                 }
-                // Hasheamos la contraseña
                 const hashedPassword = yield bcrypt_1.default.hash(pass, saltRounds);
-                // Insertamos el nuevo usuario
                 yield pool.request()
                     .input('username', mssql_1.default.VarChar, nombreUsuario)
                     .input('password', mssql_1.default.VarChar, hashedPassword)
-                    .input('estado', mssql_1.default.Bit, true) // Siempre pasamos true como estado
+                    .input('estado', mssql_1.default.Bit, true)
                     .input('idRolFK', mssql_1.default.Int, idRolFK)
                     .query(`
                     INSERT INTO tblUsuario (nombreUsuario, pass, estado, idRolFK) 
