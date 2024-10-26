@@ -14,8 +14,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const morgan_1 = __importDefault(require("morgan"));
-const db_1 = require("./config/db"); // Asegúrate de que esta ruta sea correcta
-const rol_routes_1 = __importDefault(require("./routes/rol-routes")); // Ajusta la ruta según la ubicación
+const db_1 = require("./config/db");
+const rol_routes_1 = __importDefault(require("./routes/rol-routes"));
+const empleado_routes_1 = __importDefault(require("./routes/empleado-routes"));
 class Server {
     constructor() {
         this.app = (0, express_1.default)();
@@ -45,7 +46,8 @@ class Server {
         this.app.get('/', (req, res) => {
             res.send('¡Hola, mundo!');
         });
-        this.app.use('/roles', rol_routes_1.default); // Aquí es donde se usa el router
+        this.app.use('/roles', rol_routes_1.default);
+        this.app.use('/empleados', empleado_routes_1.default);
     }
     start() {
         this.app.listen(this.app.get('port'), () => {

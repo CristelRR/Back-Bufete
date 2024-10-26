@@ -1,7 +1,8 @@
 import express, { Application } from 'express';
 import morgan from 'morgan';
-import { connectDB } from './config/db'; // Asegúrate de que esta ruta sea correcta
-import rolRoutes from './routes/rol-routes'; // Ajusta la ruta según la ubicación
+import { connectDB } from './config/db'; 
+import rolRoutes from './routes/rol-routes'; 
+import empleadoRoutes from './routes/empleado-routes';
 
 class Server {
     public app: Application;
@@ -34,7 +35,8 @@ class Server {
         this.app.get('/', (req, res) => {
             res.send('¡Hola, mundo!');
         });
-        this.app.use('/roles', rolRoutes); // Aquí es donde se usa el router
+        this.app.use('/roles', rolRoutes); 
+        this.app.use('/empleados', empleadoRoutes); 
     }
 
     start(): void {
