@@ -5,6 +5,7 @@ import { connectDB } from './config/db';
 import rolRoutes from './routes/rol-routes';
 import registerRoutes from './routes/register-routes';
 import loginRoutes from './routes/login-routes';
+import empleadoRoutes from './routes/empleado-routes';
 
 class Server {
     public app: Application;
@@ -38,9 +39,7 @@ class Server {
         this.app.get('/', (req, res) => {
             res.send('¡Hola, mundo!');
         });
-        this.app.use('/roles', rolRoutes);
-        this.app.use('/register', registerRoutes);
-        this.app.use('/login', loginRoutes);
+        this.app.use('/roles', rolRoutes); // Aquí es donde se usa el router
     }
 
     start(): void {
