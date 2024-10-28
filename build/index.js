@@ -19,7 +19,6 @@ const db_1 = require("./config/db");
 const rol_routes_1 = __importDefault(require("./routes/rol-routes"));
 const register_routes_1 = __importDefault(require("./routes/register-routes"));
 const login_routes_1 = __importDefault(require("./routes/login-routes"));
-const cors_1 = __importDefault(require("cors"));
 const db_1 = require("./config/db");
 const rol_route_1 = __importDefault(require("./routes/rol-route"));
 const empleado_route_1 = __importDefault(require("./routes/empleado-route"));
