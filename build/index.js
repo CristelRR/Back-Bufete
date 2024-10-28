@@ -17,8 +17,6 @@ const morgan_1 = __importDefault(require("morgan"));
 const cors_1 = __importDefault(require("cors"));
 const db_1 = require("./config/db");
 const rol_routes_1 = __importDefault(require("./routes/rol-routes"));
-const register_routes_1 = __importDefault(require("./routes/register-routes"));
-const login_routes_1 = __importDefault(require("./routes/login-routes"));
 const db_1 = require("./config/db");
 const rol_route_1 = __importDefault(require("./routes/rol-route"));
 const empleado_route_1 = __importDefault(require("./routes/empleado-route"));
@@ -63,14 +61,7 @@ class Server {
         this.app.get('/', (req, res) => {
             res.send('¡Hola, mundo!');
         });
-        this.app.use('/roles', rol_routes_1.default);
-        this.app.use('/register', register_routes_1.default);
-        this.app.use('/login', login_routes_1.default);
-        this.app.use('/roles', rol_routes_1.default);
-        this.app.use('/empleados', empleado_routes_1.default);
-        this.app.use('/register', register_routes_1.default);
-        this.app.use('/login', login_routes_1.default);
-        this.app.use('/expedientes', upload_file_routes_1.default);
+        this.app.use('/roles', rol_routes_1.default); // Aquí es donde se usa el router
     }
     start() {
         this.app.listen(this.app.get('port'), () => {

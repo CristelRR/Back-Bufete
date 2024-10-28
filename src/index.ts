@@ -52,6 +52,10 @@ class Server {
         });
         this.app.use('/roles', rolRoutes);
         this.app.use('/empleados', empleadoRoutes);
+        this.app.use('/register', registerRoutes);
+        this.app.use('/login', loginRoutes);
+        this.app.use('/roles', rolRoutes);
+        this.app.use('/empleados', empleadoRoutes);
         this.app.use('/clientes', clienteRoutes); 
         this.app.use('/citas', citaRoutes); 
         this.app.use('/usuarios', usuarioRoutes);
