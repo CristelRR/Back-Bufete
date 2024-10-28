@@ -46,7 +46,10 @@ class Server {
         this.app.get('/', (req, res) => {
             res.send('¡Hola, mundo!');
         });
-        this.app.use('/roles', rolRoutes); // Aquí es donde se usa el router
+        this.app.use('/roles', rolRoutes);
+        this.app.use('/empleados', empleadoRoutes);
+        this.app.use('/register', registerRoutes);
+        this.app.use('/login', loginRoutes);
     }
 
     start(): void {
