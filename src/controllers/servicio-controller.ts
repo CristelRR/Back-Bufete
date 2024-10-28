@@ -1,0 +1,49 @@
+import { Request, Response } from "express";
+import servicioModel from "../models/servicio-model";
+
+class ServicioController {
+    async getServicios(req: Request, res: Response) {
+        try {
+            const servicios = await servicioModel.getServicios();
+            res.json(servicios);
+        } catch (error) {
+            console.error('Error al obtener servicios:', error);
+            res.status(500).json({ message: 'Error al obtener servicios' });
+        }
+    }
+
+    async crearServicio(req: Request, res: Response) {
+        try {
+            const servicioData = req.body; // Asegúrate de validar los datos aquí
+            await servicioModel.crearServicio(servicioData);
+            res.status(201).json({ message: 'Servicio creado exitosamente' });
+        } catch (error) {
+            console.error('Error al crear servicio:', error);
+            res.status(500).json({ message: 'Error al crear servicio' });
+        }
+    }
+
+    async updateServicio(req: Request, res: Response) {
+        try {
+            const servicioData = req.body; // Asegúrate de validar los datos aquí
+            await servicioModel.updateServicio(servicioData);
+            res.json({ message: 'Servicio actualizado exitosamente' });
+        } catch (error) {
+            console.error('Error al actualizar servicio:', error);
+            res.status(500).json({ message: 'Error al actualizar servicio' });
+        }
+    }
+
+    async deleteServicio(req: Request, res: Response) {
+        try {
+            const { idServicio } = req.body; // Asegúrate de validar el ID aquí
+            await servicioModel.deleteServicio(idServicio);
+            res.json({ message: 'Servicio eliminado exitosamente' });
+        } catch (error) {
+            console.error('Error al eliminar servicio:', error);
+            res.status(500).json({ message: 'Error al eliminar servicio' });
+        }
+    }
+}
+
+export const servicioController = new ServicioController();
