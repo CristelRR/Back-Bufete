@@ -67,6 +67,7 @@ class Server {
         this.app.use('/roles', rolRoutes);
         this.app.use('/register', registerRoutes);
         this.app.use('/login', loginRoutes);
+        this.app.use('/expedientes', expedienteRoutes);
     }
 
     start(): void {

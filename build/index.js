@@ -61,7 +61,11 @@ class Server {
         this.app.get('/', (req, res) => {
             res.send('¡Hola, mundo!');
         });
-        this.app.use('/roles', rol_routes_1.default); // Aquí es donde se usa el router
+        this.app.use('/roles', rol_routes_1.default);
+        this.app.use('/empleados', empleado_routes_1.default);
+        this.app.use('/register', register_routes_1.default);
+        this.app.use('/login', login_routes_1.default);
+        this.app.use('/expedientes', upload_file_routes_1.default);
     }
     start() {
         this.app.listen(this.app.get('port'), () => {
