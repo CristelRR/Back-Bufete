@@ -13,6 +13,7 @@ import pagoRoutes from './routes/gestionPago-route';
 import agendaRoutes from './routes/agenda-route';
 import registerRoutes from './routes/register-routes';
 import loginRoutes from './routes/login-routes';
+import expedienteRoutes from './routes/upload-file-routes';
 
 class Server {
     public app: Application;
@@ -51,6 +52,7 @@ class Server {
         this.app.use('/empleados', empleadoRoutes);
         this.app.use('/register', registerRoutes);
         this.app.use('/login', loginRoutes);
+        this.app.use('/expedientes', expedienteRoutes);
     }
 
     start(): void {
