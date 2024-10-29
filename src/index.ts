@@ -2,10 +2,15 @@ import express, { Application } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import { connectDB } from './config/db';
-import rolRoutes from './routes/rol-routes';
+import rolRoutes from './routes/rol-route';
 import registerRoutes from './routes/register-routes';
 import loginRoutes from './routes/login-routes';
-import empleadoRoutes from './routes/empleado-routes';
+import empleadoRoutes from './routes/empleado-route';
+import citaRoutes from './routes/cita-route';
+import clienteRoutes from './routes/cliente-route';
+import usuarioRoutes from './routes/usuario-route';
+import servicioRoutes  from './routes/servicio-route';
+import especialidadRoutes  from './routes/especialidad-route';
 import expedienteRoutes from './routes/upload-file-routes';
 
 class Server {
@@ -42,6 +47,13 @@ class Server {
         });
         this.app.use('/roles', rolRoutes);
         this.app.use('/empleados', empleadoRoutes);
+        this.app.use('/clientes', clienteRoutes); 
+        this.app.use('/citas', citaRoutes); 
+        this.app.use('/usuarios', usuarioRoutes);
+        this.app.use('/servicios', servicioRoutes);
+        this.app.use('/especialidades', especialidadRoutes);
+
+
         this.app.use('/register', registerRoutes);
         this.app.use('/login', loginRoutes);
         this.app.use('/expedientes', expedienteRoutes);
