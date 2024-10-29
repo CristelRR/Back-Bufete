@@ -20,6 +20,7 @@ const rol_routes_1 = __importDefault(require("./routes/rol-routes"));
 const register_routes_1 = __importDefault(require("./routes/register-routes"));
 const login_routes_1 = __importDefault(require("./routes/login-routes"));
 const empleado_routes_1 = __importDefault(require("./routes/empleado-routes"));
+const upload_file_routes_1 = __importDefault(require("./routes/upload-file-routes"));
 class Server {
     constructor() {
         this.app = (0, express_1.default)();
@@ -54,6 +55,7 @@ class Server {
         this.app.use('/empleados', empleado_routes_1.default);
         this.app.use('/register', register_routes_1.default);
         this.app.use('/login', login_routes_1.default);
+        this.app.use('/expedientes', upload_file_routes_1.default);
     }
     start() {
         this.app.listen(this.app.get('port'), () => {
