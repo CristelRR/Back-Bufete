@@ -28,6 +28,7 @@ class Server {
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: false }));
         this.app.use(morgan('dev'));
+        this.app.use(cors());
     }
 
     async connectToDatabase(): Promise<void> {
@@ -53,6 +54,7 @@ class Server {
         this.app.use('/especialidades', especialidadRoutes);
         this.app.use('/pagos', pagoRoutes);
 
+        this.app.use('/agendas', especialidadRoutes);
     }
 
     start(): void {

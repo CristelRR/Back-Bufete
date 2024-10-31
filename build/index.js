@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const morgan_1 = __importDefault(require("morgan"));
+const cors_1 = __importDefault(require("cors"));
 const db_1 = require("./config/db");
 const rol_route_1 = __importDefault(require("./routes/rol-route"));
 const empleado_route_1 = __importDefault(require("./routes/empleado-route"));
@@ -34,6 +35,7 @@ class Server {
         this.app.use(express_1.default.json());
         this.app.use(express_1.default.urlencoded({ extended: false }));
         this.app.use((0, morgan_1.default)('dev'));
+        this.app.use((0, cors_1.default)());
     }
     connectToDatabase() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -58,6 +60,7 @@ class Server {
         this.app.use('/usuarios', usuario_route_1.default);
         this.app.use('/servicios', servicio_route_1.default);
         this.app.use('/especialidades', especialidad_route_1.default);
+        this.app.use('/agendas', especialidad_route_1.default);
     }
     start() {
         this.app.listen(this.app.get('port'), () => {
