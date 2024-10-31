@@ -27,10 +27,22 @@ class EmpleadoController {
             }
         });
     }
+    getAbogados(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const empleados = yield empleado_model_1.default.getAbogados();
+                res.json(empleados);
+            }
+            catch (error) {
+                console.error('Error al obtener abogados:', error);
+                res.status(500).json({ message: 'Error al obtener abogados' });
+            }
+        });
+    }
     crearEmpleado(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const empleadoData = req.body; // Asegúrate de validar los datos aquí
+                const empleadoData = req.body;
                 yield empleado_model_1.default.crearEmpleado(empleadoData);
                 res.status(201).json({ message: 'Empleado creado exitosamente' });
             }
@@ -43,7 +55,8 @@ class EmpleadoController {
     updateEmpleado(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const empleadoData = req.body; // Asegúrate de validar los datos aquí
+                const { idEmpleado } = req.params; // Obtén el ID del parámetro de la URL
+                const empleadoData = Object.assign(Object.assign({}, req.body), { idEmpleado: Number(idEmpleado) }); // Asegúrate de que sea un número
                 yield empleado_model_1.default.updateEmpleado(empleadoData);
                 res.json({ message: 'Empleado actualizado exitosamente' });
             }

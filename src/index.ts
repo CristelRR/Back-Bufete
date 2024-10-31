@@ -1,5 +1,6 @@
 import express, { Application } from 'express';
 import morgan from 'morgan';
+import cors from 'cors';
 import { connectDB } from './config/db'; 
 import rolRoutes from './routes/rol-route'; 
 import empleadoRoutes from './routes/empleado-route';
@@ -24,6 +25,7 @@ class Server {
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: false }));
         this.app.use(morgan('dev'));
+        this.app.use(cors());
     }
 
     async connectToDatabase(): Promise<void> {
@@ -47,8 +49,7 @@ class Server {
         this.app.use('/usuarios', usuarioRoutes);
         this.app.use('/servicios', servicioRoutes);
         this.app.use('/especialidades', especialidadRoutes);
-
-
+        this.app.use('/agendas', especialidadRoutes);
     }
 
     start(): void {
