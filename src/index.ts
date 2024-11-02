@@ -9,9 +9,10 @@ import clienteRoutes from './routes/cliente-route';
 import usuarioRoutes from './routes/usuario-route';
 import servicioRoutes  from './routes/servicio-route';
 import especialidadRoutes  from './routes/especialidad-route';
+import agendaRoutes from './routes/agenda-route';
 
 class Server {
-    public app: Application;
+    public app: Application; 
 
     constructor() {
         this.app = express();
@@ -49,7 +50,7 @@ class Server {
         this.app.use('/usuarios', usuarioRoutes);
         this.app.use('/servicios', servicioRoutes);
         this.app.use('/especialidades', especialidadRoutes);
-        this.app.use('/agendas', especialidadRoutes);
+        this.app.use('/agendas', agendaRoutes);
     }
 
     start(): void {

@@ -22,20 +22,15 @@ class AgendaModel {
         return __awaiter(this, void 0, void 0, function* () {
             const pool = yield (0, db_1.connectDB)();
             const result = yield pool.request()
-                .input('fechaIngreso', agendaData.fechaIngreso)
-                .input('numeroLicencia', agendaData.numeroLicencia)
-                .input('correo', agendaData.correo)
-                .input('nombreAgenda', agendaData.nombreAgenda)
-                .input('aPAgenda', agendaData.aPAgenda)
-                .input('aMAgenda', agendaData.aMAgenda)
-                .input('telefono', agendaData.telefono)
-                .input('pass', agendaData.pass)
-                .input('idRolFK', agendaData.idRolFK)
-                .input('idEspecialidadFK', agendaData.idEspecialidadFK)
+                .input('horaInicio', agendaData.horaInicio)
+                .input('horaFinal', agendaData.horaFinal)
+                .input('fecha', agendaData.fecha)
+                .input('estado', agendaData.estado)
+                .input('idEmpleadoFK', agendaData.idEmpleadoFK)
                 .query(`
                 INSERT INTO tblAgenda 
-                (fechaIngreso, numeroLicencia, correo, nombreAgenda, aPAgenda, aMAgenda, telefono, pass, idRolFK, idEspecialidadFK) 
-                VALUES (@fechaIngreso, @numeroLicencia, @correo, @nombreAgenda, @aPAgenda, @aMAgenda, @telefono, @pass, @idRolFK, @idEspecialidadFK)
+                (horaInicio, horaFinal, fecha, estado, idEmpleadoFK) 
+                VALUES (@horaInicio, @horaFinal, @fecha, @estado, @idEmpleadoFK)
             `);
             return result;
         });

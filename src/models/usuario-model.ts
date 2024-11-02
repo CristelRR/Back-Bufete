@@ -1,6 +1,15 @@
 import { connectDB } from "../config/db";
 
 class UsuarioModel {
+
+    async findByEmail(email: string) {
+        const pool = await connectDB();
+        const result = await pool.request()
+            .input('email', email) 
+            .query('SELECT * FROM tblUsuario WHERE nombreUsuario = @email'); 
+        return result.recordset[0]; 
+    }     
+
     async getUsuarios() {
         const pool = await connectDB();
         const result = await pool.request().query('SELECT * FROM tblUsuario');

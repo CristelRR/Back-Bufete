@@ -23,6 +23,7 @@ const cliente_route_1 = __importDefault(require("./routes/cliente-route"));
 const usuario_route_1 = __importDefault(require("./routes/usuario-route"));
 const servicio_route_1 = __importDefault(require("./routes/servicio-route"));
 const especialidad_route_1 = __importDefault(require("./routes/especialidad-route"));
+const agenda_route_1 = __importDefault(require("./routes/agenda-route"));
 class Server {
     constructor() {
         this.app = (0, express_1.default)();
@@ -60,7 +61,7 @@ class Server {
         this.app.use('/usuarios', usuario_route_1.default);
         this.app.use('/servicios', servicio_route_1.default);
         this.app.use('/especialidades', especialidad_route_1.default);
-        this.app.use('/agendas', especialidad_route_1.default);
+        this.app.use('/agendas', agenda_route_1.default);
     }
     start() {
         this.app.listen(this.app.get('port'), () => {
