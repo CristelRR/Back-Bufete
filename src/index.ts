@@ -10,9 +10,9 @@ import usuarioRoutes from './routes/usuario-route';
 import servicioRoutes  from './routes/servicio-route';
 import especialidadRoutes  from './routes/especialidad-route';
 import pagoRoutes from './routes/gestionPago-route';
+import agendaRoutes from './routes/agenda-route';
 
 class Server {
-
     public app: Application;
 
     constructor() {
@@ -55,6 +55,7 @@ class Server {
         this.app.use('/pagos', pagoRoutes);
 
         this.app.use('/agendas', especialidadRoutes);
+        this.app.use('/agendas', agendaRoutes);
     }
 
     start(): void {

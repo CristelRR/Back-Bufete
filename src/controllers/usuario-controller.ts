@@ -9,8 +9,31 @@ class UsuarioController {
         } catch (error) {
             console.error('Error al obtener usuarios:', error);
             res.status(500).json({ message: 'Error al obtener usuarios' });
+        } 
+    }
+
+    async login(req: Request, res: Response) {
+        try {
+            const { email, password } = req.body; 
+            const usuario = await usuarioModel.findByEmail(email); 
+            if (usuario && usuario.pass === password) { 
+                res.json({ 
+                    message: 'Inicio de sesión exitoso', 
+                    usuario: {
+                        id: usuario.idUsuario,
+                        nombre: usuario.nombreUsuario,
+                        rol: usuario.idRolFK // Asumiendo que este es el campo del rol
+                    }
+                });
+            } else {
+                res.status(401).json({ message: 'Credenciales incorrectas' });
+            }
+        } catch (error) {
+            console.error('Error al iniciar sesión:', error);
+            res.status(500).json({ message: 'Error al iniciar sesión' });
         }
     }
+    
 
     async crearUsuario(req: Request, res: Response) {
         try {
