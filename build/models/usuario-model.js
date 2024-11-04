@@ -11,6 +11,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const db_1 = require("../config/db");
 class UsuarioModel {
+    findByEmail(email) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .input('email', email)
+                .query('SELECT * FROM tblUsuario WHERE nombreUsuario = @email');
+            return result.recordset[0];
+        });
+    }
     getUsuarios() {
         return __awaiter(this, void 0, void 0, function* () {
             const pool = yield (0, db_1.connectDB)();

@@ -18,11 +18,17 @@ class EmpleadoModel {
             return result.recordset;
         });
     }
+    getAbogados() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request().query('SELECT * FROM tblEmpleado AS E WHERE E.idRolFK = 2');
+            return result.recordset;
+        });
+    }
     crearEmpleado(empleadoData) {
         return __awaiter(this, void 0, void 0, function* () {
             const pool = yield (0, db_1.connectDB)();
             const result = yield pool.request()
-                .input('idEmpleado', empleadoData.idEmpleado)
                 .input('fechaIngreso', empleadoData.fechaIngreso)
                 .input('numeroLicencia', empleadoData.numeroLicencia)
                 .input('correo', empleadoData.correo)
@@ -35,8 +41,8 @@ class EmpleadoModel {
                 .input('idEspecialidadFK', empleadoData.idEspecialidadFK)
                 .query(`
                 INSERT INTO tblEmpleado 
-                (idEmpleado, fechaIngreso, numeroLicencia, correo, nombreEmpleado, aPEmpleado, aMEmpleado, telefono, pass, idRolFK, idEspecialidadFK) 
-                VALUES (@idEmpleado, @fechaIngreso, @numeroLicencia, @correo, @nombreEmpleado, @aPEmpleado, @aMEmpleado, @telefono, @pass, @idRolFK, @idEspecialidadFK)
+                (fechaIngreso, numeroLicencia, correo, nombreEmpleado, aPEmpleado, aMEmpleado, telefono, pass, idRolFK, idEspecialidadFK) 
+                VALUES (@fechaIngreso, @numeroLicencia, @correo, @nombreEmpleado, @aPEmpleado, @aMEmpleado, @telefono, @pass, @idRolFK, @idEspecialidadFK)
             `);
             return result;
         });

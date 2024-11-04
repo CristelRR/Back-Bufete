@@ -7,10 +7,15 @@ class EmpleadoModel {
         return result.recordset;
     }
 
+    async getAbogados() {
+        const pool = await connectDB();
+        const result = await pool.request().query('SELECT * FROM tblEmpleado AS E WHERE E.idRolFK = 2');
+        return result.recordset;
+    }
+
     async crearEmpleado(empleadoData: any) {
         const pool = await connectDB();
         const result = await pool.request()
-            .input('idEmpleado', empleadoData.idEmpleado)
             .input('fechaIngreso', empleadoData.fechaIngreso)
             .input('numeroLicencia', empleadoData.numeroLicencia)
             .input('correo', empleadoData.correo)
@@ -23,8 +28,8 @@ class EmpleadoModel {
             .input('idEspecialidadFK', empleadoData.idEspecialidadFK)
             .query(`
                 INSERT INTO tblEmpleado 
-                (idEmpleado, fechaIngreso, numeroLicencia, correo, nombreEmpleado, aPEmpleado, aMEmpleado, telefono, pass, idRolFK, idEspecialidadFK) 
-                VALUES (@idEmpleado, @fechaIngreso, @numeroLicencia, @correo, @nombreEmpleado, @aPEmpleado, @aMEmpleado, @telefono, @pass, @idRolFK, @idEspecialidadFK)
+                (fechaIngreso, numeroLicencia, correo, nombreEmpleado, aPEmpleado, aMEmpleado, telefono, pass, idRolFK, idEspecialidadFK) 
+                VALUES (@fechaIngreso, @numeroLicencia, @correo, @nombreEmpleado, @aPEmpleado, @aMEmpleado, @telefono, @pass, @idRolFK, @idEspecialidadFK)
             `);
         return result;
     }

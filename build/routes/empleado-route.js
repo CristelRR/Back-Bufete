@@ -10,8 +10,9 @@ class EmpleadoRoutes {
     config() {
         this.router.get('/', empleado_controller_1.empleadoController.getEmpleados);
         this.router.post('/', empleado_controller_1.empleadoController.crearEmpleado);
-        this.router.put('/', empleado_controller_1.empleadoController.updateEmpleado);
+        this.router.put('/:idEmpleado', empleado_controller_1.empleadoController.updateEmpleado);
         this.router.delete('/', empleado_controller_1.empleadoController.deleteEmpleado);
+        this.router.get('/abogados', empleado_controller_1.empleadoController.getAbogados);
     }
 }
 const empleadoRoutes = new EmpleadoRoutes();

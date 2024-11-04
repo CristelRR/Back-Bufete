@@ -12,9 +12,19 @@ class EmpleadoController {
         }
     }
 
+    async getAbogados(req: Request, res: Response) {
+        try {
+            const empleados = await empleadoModel.getAbogados();
+            res.json(empleados);
+        } catch (error) {
+            console.error('Error al obtener abogados:', error);
+            res.status(500).json({ message: 'Error al obtener abogados' });
+        }
+    }
+
     async crearEmpleado(req: Request, res: Response) {
         try {
-            const empleadoData = req.body; // Asegúrate de validar los datos aquí
+            const empleadoData = req.body; 
             await empleadoModel.crearEmpleado(empleadoData);
             res.status(201).json({ message: 'Empleado creado exitosamente' });
         } catch (error) {
@@ -25,7 +35,8 @@ class EmpleadoController {
 
     async updateEmpleado(req: Request, res: Response) {
         try {
-            const empleadoData = req.body; // Asegúrate de validar los datos aquí
+            const { idEmpleado } = req.params; // Obtén el ID del parámetro de la URL
+            const empleadoData = { ...req.body, idEmpleado: Number(idEmpleado) }; // Asegúrate de que sea un número
             await empleadoModel.updateEmpleado(empleadoData);
             res.json({ message: 'Empleado actualizado exitosamente' });
         } catch (error) {

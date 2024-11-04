@@ -1,10 +1,8 @@
 import express, { Application } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
-import { connectDB } from './config/db';
-import rolRoutes from './routes/rol-route';
-import registerRoutes from './routes/register-routes';
-import loginRoutes from './routes/login-routes';
+import { connectDB } from './config/db'; 
+import rolRoutes from './routes/rol-route'; 
 import empleadoRoutes from './routes/empleado-route';
 import citaRoutes from './routes/cita-route';
 import clienteRoutes from './routes/cliente-route';
@@ -12,9 +10,12 @@ import usuarioRoutes from './routes/usuario-route';
 import servicioRoutes  from './routes/servicio-route';
 import especialidadRoutes  from './routes/especialidad-route';
 import expedienteRoutes from './routes/upload-file-routes';
+import agendaRoutes from './routes/agenda-route';
+import registerRoutes from './routes/register-routes';
+import loginRoutes from './routes/login-routes';
 
 class Server {
-    public app: Application;
+    public app: Application; 
 
     constructor() {
         this.app = express();
@@ -29,6 +30,7 @@ class Server {
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: false }));
         this.app.use(morgan('dev'));
+        this.app.use(cors());
     }
 
     async connectToDatabase(): Promise<void> {
@@ -52,6 +54,7 @@ class Server {
         this.app.use('/usuarios', usuarioRoutes);
         this.app.use('/servicios', servicioRoutes);
         this.app.use('/especialidades', especialidadRoutes);
+        this.app.use('/agendas', agendaRoutes);
         this.app.use('/register', registerRoutes);
         this.app.use('/login', loginRoutes);
         this.app.use('/expedientes', expedienteRoutes);

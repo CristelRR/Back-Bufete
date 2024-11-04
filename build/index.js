@@ -26,6 +26,7 @@ const usuario_route_1 = __importDefault(require("./routes/usuario-route"));
 const servicio_route_1 = __importDefault(require("./routes/servicio-route"));
 const especialidad_route_1 = __importDefault(require("./routes/especialidad-route"));
 const upload_file_routes_1 = __importDefault(require("./routes/upload-file-routes"));
+const agenda_route_1 = __importDefault(require("./routes/agenda-route"));
 class Server {
     constructor() {
         this.app = (0, express_1.default)();
@@ -39,6 +40,7 @@ class Server {
         this.app.use(express_1.default.json());
         this.app.use(express_1.default.urlencoded({ extended: false }));
         this.app.use((0, morgan_1.default)('dev'));
+        this.app.use((0, cors_1.default)());
     }
     connectToDatabase() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -66,6 +68,7 @@ class Server {
         this.app.use('/register', register_routes_1.default);
         this.app.use('/login', login_routes_1.default);
         this.app.use('/expedientes', upload_file_routes_1.default);
+        this.app.use('/agendas', agenda_route_1.default);
     }
     start() {
         this.app.listen(this.app.get('port'), () => {
