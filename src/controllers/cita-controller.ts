@@ -44,6 +44,29 @@ class CitaController {
             res.status(500).json({ message: 'Error al eliminar cita' });
         }
     }
+
+    async getAbogadosPorServicio(req: Request, res: Response) {
+        try {
+            const { idServicio } = req.params; // Obtiene el ID del servicio de los parámetros de la URL
+            const abogados = await citaModel.getAbogadosPorServicio(Number(idServicio));
+            res.json(abogados);
+        } catch (error) {
+            console.error('Error al obtener abogados:', error);
+            res.status(500).json({ message: 'Error al obtener abogados' });
+        }
+    }
+
+    async getHorariosDisponiblesPorAbogado(req: Request, res: Response) {
+        try {
+            const { idAbogado } = req.params; // Obtiene el ID del abogado de los parámetros de la URL
+            const horarios = await citaModel.getHorariosDisponiblesPorAbogado(Number(idAbogado));
+            res.json(horarios);
+        } catch (error) {
+            console.error('Error al obtener horarios disponibles:', error);
+            res.status(500).json({ message: 'Error al obtener horarios disponibles' });
+        }
+    }
+        
 }
 
 export const citaController = new CitaController();

@@ -18,6 +18,15 @@ class ClienteModel {
             return result.recordset;
         });
     }
+    getClienteById(idCliente) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .input('idCliente', idCliente)
+                .query('SELECT * FROM tblCliente WHERE idCliente = @idCliente');
+            return result.recordset;
+        });
+    }
     crearCliente(clienteData) {
         return __awaiter(this, void 0, void 0, function* () {
             const pool = yield (0, db_1.connectDB)();

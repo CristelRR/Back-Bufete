@@ -12,6 +12,23 @@ class EmpleadoController {
         }
     }
 
+    getEmpleadoById = async (req: Request, res: Response) => { // Usando la sintaxis de propiedad
+        try {
+            const idEmpleado = Number(req.params.idEmpleado);
+            if (isNaN(idEmpleado)) {
+                return res.status(400).json({ message: 'ID inválido' });
+            }
+            const empleado = await empleadoModel.getEmpleadoById(idEmpleado);
+            if (!empleado) {
+                return res.status(404).json({ message: 'Empleado no encontrado' });
+            }
+            res.status(200).json(empleado);
+        } catch (error) {
+            console.error('Error al obtener empleado por ID:', error);
+            res.status(500).json({ message: 'Error al obtener empleado' });
+        }
+    }
+    
     async getAbogados(req: Request, res: Response) {
         try {
             const empleados = await empleadoModel.getAbogados();
