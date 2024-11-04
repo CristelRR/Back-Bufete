@@ -38,7 +38,9 @@ class UsuarioController {
                         usuario: {
                             id: usuario.idUsuario,
                             nombre: usuario.nombreUsuario,
-                            rol: usuario.idRolFK // Asumiendo que este es el campo del rol
+                            rol: usuario.idRolFK,
+                            idEmpleado: usuario.idEmpleadoFK,
+                            idCliente: usuario.idClienteFK
                         }
                     });
                 }

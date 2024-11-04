@@ -12,6 +12,8 @@ class CitaRoutes {
         this.router.post('/', cita_controller_1.citaController.crearCita);
         this.router.put('/', cita_controller_1.citaController.updateCita);
         this.router.delete('/', cita_controller_1.citaController.deleteCita);
+        this.router.get("/abogados/:idServicio", cita_controller_1.citaController.getAbogadosPorServicio);
+        this.router.get('/horarios/:idAbogado', cita_controller_1.citaController.getHorariosDisponiblesPorAbogado);
     }
 }
 const citaRoutes = new CitaRoutes();

@@ -46,6 +46,8 @@ class EspecialidadModel {
             .query('SELECT * FROM tblEspecialidad WHERE idEspecialidad = @idEspecialidad');
         return result.recordset;
     }
+
+    
 }
 
 const especialidadModel = new EspecialidadModel();

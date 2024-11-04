@@ -68,6 +68,46 @@ class CitaModel {
             return result.recordset;
         });
     }
+    getAbogadosPorServicio(idServicio) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .input('idServicio', idServicio)
+                .query(`
+                SELECT e.idEmpleado, e.nombreEmpleado, e.aPEmpleado, e.aMEmpleado
+                FROM tblServicio s JOIN 
+                     tblEspecialidad_Servicio es ON s.idServicio = es.idServicio JOIN 
+                     tblEmpleado e ON es.idEspecialidad = e.idEspecialidadFK
+                WHERE s.idServicio = @idServicio AND e.idRolFK = 2;  
+            `);
+            return result.recordset;
+        });
+    }
+    getHorariosDisponiblesPorAbogado(idAbogado) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .input('idAbogado', idAbogado)
+                .query(`
+                SELECT a.fecha, a.horaInicio, a.horaFinal
+                FROM tblAgenda a
+                WHERE 
+                    a.idEmpleadoFK = @idAbogado  -- Filtra por el ID del abogado
+                    AND a.estado = 'Disponible'  -- Solo horarios disponibles
+                    AND a.fecha >= CAST(GETDATE() AS DATE)  -- Solo fechas futuras
+                    AND NOT EXISTS (
+                        SELECT 1
+                        FROM tblCita c
+                        WHERE 
+                            c.idAgendaFK = a.idAgenda
+                            AND c.estado = 'programada'  -- Solo citas programadas
+                    )
+                ORDER BY 
+                    a.fecha, a.horaInicio;
+            `);
+            return result.recordset;
+        });
+    }
 }
 const citaModel = new CitaModel();
 exports.default = citaModel;

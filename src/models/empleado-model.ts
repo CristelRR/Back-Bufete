@@ -13,6 +13,14 @@ class EmpleadoModel {
         return result.recordset;
     }
 
+    async getEmpleadoById(idEmpleado: number) {
+        const pool = await connectDB();
+        const result = await pool.request()
+            .input('idEmpleado', idEmpleado)
+            .query('SELECT * FROM tblEmpleado WHERE idEmpleado = @idEmpleado');
+        return result.recordset[0]; // Retorna el primer registro encontrado
+    }    
+
     async crearEmpleado(empleadoData: any) {
         const pool = await connectDB();
         const result = await pool.request()

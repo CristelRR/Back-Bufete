@@ -44,6 +44,24 @@ class ClienteController {
             res.status(500).json({ message: 'Error al eliminar cliente' });
         }
     }
+
+    getClienteById = async (req: Request, res: Response) => {
+        try {
+            const idCliente = Number(req.params.idCliente);
+            if (isNaN(idCliente)) {
+                return res.status(400).json({ message: 'ID inválido' });
+            }
+            const cliente = await clienteModel.findById(idCliente); 
+            if (cliente.length === 0) {
+                return res.status(404).json({ message: 'Cliente no encontrado' });
+            }
+            res.status(200).json(cliente[0]); 
+        } catch (error) {
+            console.error('Error al obtener cliente por ID:', error);
+            res.status(500).json({ message: 'Error al obtener cliente' });
+        }
+    }
+    
 }
 
 export const clienteController = new ClienteController();

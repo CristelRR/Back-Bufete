@@ -14,6 +14,8 @@ class EmpleadoRoutes {
         this.router.put('/:idEmpleado', empleadoController.updateEmpleado); 
         this.router.delete('/', empleadoController.deleteEmpleado);
         this.router.get('/abogados', empleadoController.getAbogados);
+        this.router.get('/:idEmpleado', empleadoController.getEmpleadoById); 
+
     }
 }
 

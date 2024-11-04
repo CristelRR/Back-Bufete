@@ -15,6 +15,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.empleadoController = void 0;
 const empleado_model_1 = __importDefault(require("../models/empleado-model"));
 class EmpleadoController {
+    constructor() {
+        this.getEmpleadoById = (req, res) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const idEmpleado = Number(req.params.idEmpleado);
+                if (isNaN(idEmpleado)) {
+                    return res.status(400).json({ message: 'ID inválido' });
+                }
+                const empleado = yield empleado_model_1.default.getEmpleadoById(idEmpleado);
+                if (!empleado) {
+                    return res.status(404).json({ message: 'Empleado no encontrado' });
+                }
+                res.status(200).json(empleado);
+            }
+            catch (error) {
+                console.error('Error al obtener empleado por ID:', error);
+                res.status(500).json({ message: 'Error al obtener empleado' });
+            }
+        });
+    }
     getEmpleados(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {

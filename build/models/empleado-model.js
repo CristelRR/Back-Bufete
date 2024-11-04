@@ -25,6 +25,15 @@ class EmpleadoModel {
             return result.recordset;
         });
     }
+    getEmpleadoById(idEmpleado) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .input('idEmpleado', idEmpleado)
+                .query('SELECT * FROM tblEmpleado WHERE idEmpleado = @idEmpleado');
+            return result.recordset[0]; // Retorna el primer registro encontrado
+        });
+    }
     crearEmpleado(empleadoData) {
         return __awaiter(this, void 0, void 0, function* () {
             const pool = yield (0, db_1.connectDB)();

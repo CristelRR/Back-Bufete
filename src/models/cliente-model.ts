@@ -7,6 +7,15 @@ class ClienteModel {
         return result.recordset;
     }
 
+    async getClienteById(idCliente: number) {
+        const pool = await connectDB();
+        const result = await pool.request()
+            .input('idCliente', idCliente)
+            .query('SELECT * FROM tblCliente WHERE idCliente = @idCliente'); 
+        return result.recordset; 
+    }
+    
+    
     async crearCliente(clienteData: any) {
         const pool = await connectDB();
         const result = await pool.request()
