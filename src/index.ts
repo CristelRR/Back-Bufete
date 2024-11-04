@@ -52,8 +52,6 @@ class Server {
         this.app.use('/usuarios', usuarioRoutes);
         this.app.use('/servicios', servicioRoutes);
         this.app.use('/especialidades', especialidadRoutes);
-
-
         this.app.use('/register', registerRoutes);
         this.app.use('/login', loginRoutes);
         this.app.use('/expedientes', expedienteRoutes);
