@@ -72,7 +72,7 @@ class CitaModel {
         const result = await pool.request()
             .input('idAbogado', idAbogado)
             .query(`
-                SELECT a.fecha, a.horaInicio, a.horaFinal
+                SELECT a.fecha, a.horaInicio, a.horaFinal, a.estado, a.idAgenda
                 FROM tblAgenda a
                 WHERE 
                     a.idEmpleadoFK = @idAbogado  -- Filtra por el ID del abogado
@@ -90,8 +90,47 @@ class CitaModel {
             `);
         return result.recordset;
     }
+
+    async crearCitaConTransaccion(citaData: any) {
+        const pool = await connectDB();
+        const transaction = pool.transaction(); // Crear la transacción
     
+        try {
+            await transaction.begin(); // Iniciar la transacción
     
+            // Crear un "request" desde la transacción
+            const request = transaction.request();
+    
+            // 1. Crear la cita en tblCita
+            await request
+                .input('motivo', citaData.motivo)
+                .input('estado', citaData.estado)
+                .input('idClienteFK', citaData.idClienteFK)
+                .input('idAgendaFK', citaData.idAgendaFK)
+                .query(`
+                    INSERT INTO tblCita (motivo, estado, idClienteFK, idAgendaFK) 
+                    VALUES (@motivo, @estado, @idClienteFK, @idAgendaFK)
+                `);
+    
+            // 2. Actualizar el estado de la agenda en tblAgenda
+            await request
+                .input('idAgenda', citaData.idAgendaFK)
+                .input('nuevoEstado', 'Programada') 
+                .query(`
+                    UPDATE tblAgenda 
+                    SET estado = @nuevoEstado
+                    WHERE idAgenda = @idAgenda
+                `);
+    
+            // Confirmar la transacción si todo ha salido bien
+            await transaction.commit();
+            return { message: 'Cita creada y agenda actualizada correctamente' };
+        } catch (error: any) { 
+            // Revertir la transacción si ocurre un error
+            await transaction.rollback();
+            throw new Error('Error en la transacción: ' + error.message);
+        }
+    }
     
 }
 

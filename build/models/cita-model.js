@@ -89,7 +89,7 @@ class CitaModel {
             const result = yield pool.request()
                 .input('idAbogado', idAbogado)
                 .query(`
-                SELECT a.fecha, a.horaInicio, a.horaFinal
+                SELECT a.fecha, a.horaInicio, a.horaFinal, a.estado, a.idAgenda
                 FROM tblAgenda a
                 WHERE 
                     a.idEmpleadoFK = @idAbogado  -- Filtra por el ID del abogado
@@ -106,6 +106,44 @@ class CitaModel {
                     a.fecha, a.horaInicio;
             `);
             return result.recordset;
+        });
+    }
+    crearCitaConTransaccion(citaData) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const transaction = pool.transaction(); // Crear la transacción
+            try {
+                yield transaction.begin(); // Iniciar la transacción
+                // Crear un "request" desde la transacción
+                const request = transaction.request();
+                // 1. Crear la cita en tblCita
+                yield request
+                    .input('motivo', citaData.motivo)
+                    .input('estado', citaData.estado)
+                    .input('idClienteFK', citaData.idClienteFK)
+                    .input('idAgendaFK', citaData.idAgendaFK)
+                    .query(`
+                    INSERT INTO tblCita (motivo, estado, idClienteFK, idAgendaFK) 
+                    VALUES (@motivo, @estado, @idClienteFK, @idAgendaFK)
+                `);
+                // 2. Actualizar el estado de la agenda en tblAgenda
+                yield request
+                    .input('idAgenda', citaData.idAgendaFK)
+                    .input('nuevoEstado', 'Programada')
+                    .query(`
+                    UPDATE tblAgenda 
+                    SET estado = @nuevoEstado
+                    WHERE idAgenda = @idAgenda
+                `);
+                // Confirmar la transacción si todo ha salido bien
+                yield transaction.commit();
+                return { message: 'Cita creada y agenda actualizada correctamente' };
+            }
+            catch (error) {
+                // Revertir la transacción si ocurre un error
+                yield transaction.rollback();
+                throw new Error('Error en la transacción: ' + error.message);
+            }
         });
     }
 }
