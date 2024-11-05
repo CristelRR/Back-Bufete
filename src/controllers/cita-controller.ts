@@ -66,7 +66,21 @@ class CitaController {
             res.status(500).json({ message: 'Error al obtener horarios disponibles' });
         }
     }
-        
+
+    async crearCitaConTransaccion(req: Request, res: Response) {
+        try {
+            const citaData = req.body; 
+
+            const result = await citaModel.crearCitaConTransaccion(citaData);
+            
+            res.status(201).json({ message: result.message });  
+        } catch (error: any) {  
+            console.error('Error al crear cita con transacción:', error);
+            
+            res.status(500).json({ message: 'Error al crear cita con transacción', error: error.message });
+        }
+    }
+      
 }
 
 export const citaController = new CitaController();

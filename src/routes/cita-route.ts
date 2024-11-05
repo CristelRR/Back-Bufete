@@ -15,6 +15,7 @@ class CitaRoutes {
         this.router.delete('/', citaController.deleteCita);    
         this.router.get("/abogados/:idServicio", citaController.getAbogadosPorServicio);
         this.router.get('/horarios/:idAbogado', citaController.getHorariosDisponiblesPorAbogado); 
+        this.router.post('/crear-cita', citaController.crearCitaConTransaccion);
 
     }
 }
