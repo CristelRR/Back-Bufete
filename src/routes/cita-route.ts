@@ -16,7 +16,7 @@ class CitaRoutes {
         this.router.get("/abogados/:idServicio", citaController.getAbogadosPorServicio);
         this.router.get('/horarios/:idAbogado', citaController.getHorariosDisponiblesPorAbogado); 
         this.router.post('/crear-cita', citaController.crearCitaConTransaccion);
-
+        this.router.get('/citas/:idCliente', citaController.getCitasByCliente);
     }
 }
 

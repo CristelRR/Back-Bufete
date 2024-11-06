@@ -5,7 +5,7 @@ dotenv.config();
 
 // Obtiene las variables de entorno
 const server = process.env.DB_SERVER || 'LAPTOP-Q49U05AS';
-const database = process.env.DB_DATABASE || 'LEXVARGAS';
+const database = process.env.DB_DATABASE || 'LEXVARGAS_BD';
 const port = Number(process.env.DB_PORT) || 1433;
 const user = process.env.DB_USER || 'LuciaRR';
 const password = process.env.DB_PASSWORD || 'linux';
