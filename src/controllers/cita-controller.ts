@@ -80,7 +80,17 @@ class CitaController {
             res.status(500).json({ message: 'Error al crear cita con transacción', error: error.message });
         }
     }
-      
+ 
+    async getCitasByCliente(req: Request, res: Response) {
+        try {
+            const { idCliente } = req.params; // Obtiene el ID del cliente de los parámetros de la URL
+            const citas = await citaModel.getCitasByCliente(Number(idCliente));
+            res.json(citas);
+        } catch (error) {
+            console.error('Error al obtener citas del cliente:', error);
+            res.status(500).json({ message: 'Error al obtener citas del cliente' });
+        }
+    }
 }
 
 export const citaController = new CitaController();

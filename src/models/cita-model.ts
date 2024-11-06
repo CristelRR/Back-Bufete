@@ -101,15 +101,16 @@ class CitaModel {
             // Crear un "request" desde la transacción
             const request = transaction.request();
     
-            // 1. Crear la cita en tblCita
+            // 1. Crear la cita en tblCita con idServicioFK incluido
             await request
                 .input('motivo', citaData.motivo)
                 .input('estado', citaData.estado)
                 .input('idClienteFK', citaData.idClienteFK)
                 .input('idAgendaFK', citaData.idAgendaFK)
+                .input('idServicioFK', citaData.idServicioFK) // Nuevo parámetro
                 .query(`
-                    INSERT INTO tblCita (motivo, estado, idClienteFK, idAgendaFK) 
-                    VALUES (@motivo, @estado, @idClienteFK, @idAgendaFK)
+                    INSERT INTO tblCita (motivo, estado, idClienteFK, idAgendaFK, idServicioFK) 
+                    VALUES (@motivo, @estado, @idClienteFK, @idAgendaFK, @idServicioFK)
                 `);
     
             // 2. Actualizar el estado de la agenda en tblAgenda
@@ -130,8 +131,44 @@ class CitaModel {
             await transaction.rollback();
             throw new Error('Error en la transacción: ' + error.message);
         }
-    }
+    }    
     
+    async getCitasByCliente(idCliente: number) {
+        const pool = await connectDB();
+        const result = await pool.request()
+            .input('idCliente', idCliente)
+            .query(`
+                SELECT 
+                    C.idCita,
+                    C.motivo,
+                    C.estado AS estadoCita,
+                    CL.nombreCliente,
+                    CL.aPCliente,
+                    CL.aMCliente,
+                    A.fecha AS fechaCita,
+                    A.horaInicio,
+                    A.horaFinal,
+                    E.nombreEmpleado AS abogadoNombre,
+                    E.aPEmpleado AS abogadoApellidoPaterno,
+                    E.aMEmpleado AS abogadoApellidoMaterno,
+                    S.nombreServicio,
+                    S.descripcion AS descripcionServicio,
+                    S.costo AS costoServicio
+                FROM 
+                    tblCita C
+                JOIN 
+                    tblCliente CL ON C.idClienteFK = CL.idCliente
+                JOIN 
+                    tblAgenda A ON C.idAgendaFK = A.idAgenda
+                JOIN 
+                    tblEmpleado E ON A.idEmpleadoFK = E.idEmpleado
+                JOIN 
+                    tblServicio S ON C.idServicioFK = S.idServicio
+                WHERE 
+                    C.idClienteFK = @idCliente;
+            `);
+        return result.recordset;
+    }
 }
 
 const citaModel = new CitaModel();

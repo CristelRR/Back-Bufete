@@ -105,5 +105,18 @@ class CitaController {
             }
         });
     }
+    getCitasByCliente(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { idCliente } = req.params; // Obtiene el ID del cliente de los parámetros de la URL
+                const citas = yield cita_model_1.default.getCitasByCliente(Number(idCliente));
+                res.json(citas);
+            }
+            catch (error) {
+                console.error('Error al obtener citas del cliente:', error);
+                res.status(500).json({ message: 'Error al obtener citas del cliente' });
+            }
+        });
+    }
 }
 exports.citaController = new CitaController();
