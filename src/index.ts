@@ -10,8 +10,8 @@ import usuarioRoutes from './routes/usuario-route';
 import servicioRoutes  from './routes/servicio-route';
 import especialidadRoutes  from './routes/especialidad-route';
 import agendaRoutes from './routes/agenda-route';
-import registerRoutes from './routes/register-routes';
 import loginRoutes from './routes/login-routes';
+import registerRoutes from './routes/register-routes';
 import expedienteRoutes from './routes/upload-file-routes';
 
 class Server {
@@ -54,9 +54,7 @@ class Server {
         this.app.use('/usuarios', usuarioRoutes);
         this.app.use('/servicios', servicioRoutes);
         this.app.use('/especialidades', especialidadRoutes);
-        this.app.use('/register', registerRoutes);
-        this.app.use('/login', loginRoutes);
-        this.app.use('/expedientes', expedienteRoutes);
+        this.app.use('/agendas', agendaRoutes);
     }
 
     start(): void {
