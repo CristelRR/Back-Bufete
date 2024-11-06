@@ -1,5 +1,6 @@
 import express, { Application } from 'express';
 import morgan from 'morgan';
+import cors from 'cors';
 import { connectDB } from './config/db'; 
 import rolRoutes from './routes/rol-route'; 
 import empleadoRoutes from './routes/empleado-route';
@@ -8,8 +9,10 @@ import clienteRoutes from './routes/cliente-route';
 import usuarioRoutes from './routes/usuario-route';
 import servicioRoutes  from './routes/servicio-route';
 import especialidadRoutes  from './routes/especialidad-route';
+import pagoRoutes from './routes/gestionPago-route';
 
 class Server {
+
     public app: Application;
 
     constructor() {
@@ -21,6 +24,7 @@ class Server {
 
     config(): void {
         this.app.set('port', process.env.PORT || 3000);
+        this.app.use(cors({ origin: 'http://localhost:4200' })); //Habilitado para cors
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: false }));
         this.app.use(morgan('dev'));
@@ -47,7 +51,7 @@ class Server {
         this.app.use('/usuarios', usuarioRoutes);
         this.app.use('/servicios', servicioRoutes);
         this.app.use('/especialidades', especialidadRoutes);
-
+        this.app.use('/pagos', pagoRoutes);
 
     }
 
