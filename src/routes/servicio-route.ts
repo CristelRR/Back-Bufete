@@ -13,6 +13,7 @@ class ServicioRoutes {
         this.router.post('/', servicioController.crearServicio);
         this.router.put('/', servicioController.updateServicio);
         this.router.delete('/', servicioController.deleteServicio);
+        this.router.get('/servicio-abogado/:idAbogado', servicioController.getServiciosPorAbogado);
     }
 }
 

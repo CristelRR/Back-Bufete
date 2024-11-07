@@ -69,6 +69,21 @@ class ServicioModel {
             return result.recordset;
         });
     }
+    getServiciosPorAbogado(idAbogado) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .input('idAbogado', idAbogado)
+                .query(`
+                SELECT s.idServicio, s.nombreServicio
+                FROM tblEmpleado e
+                JOIN tblEspecialidad_Servicio es ON e.idEspecialidadFK = es.idEspecialidad
+                JOIN tblServicio s ON es.idServicio = s.idServicio
+                WHERE e.idEmpleado = @idAbogado AND e.idRolFK = 2;  
+            `);
+            return result.recordset;
+        });
+    }
 }
 const servicioModel = new ServicioModel();
 exports.default = servicioModel;

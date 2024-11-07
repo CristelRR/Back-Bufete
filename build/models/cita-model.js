@@ -227,7 +227,8 @@ class CitaModel {
                     E.aMEmpleado AS abogadoApellidoMaterno,
                     S.nombreServicio,
                     S.descripcion AS descripcionServicio,
-                    S.costo AS costoServicio
+                    S.costo AS costoServicio,
+                    C.idServicioFK
                 FROM 
                     tblCita C
                 JOIN 
@@ -242,6 +243,71 @@ class CitaModel {
                     E.idEmpleado = @idAbogado;  -- Filtramos por el id del abogado
             `);
             return result.recordset;
+        });
+    }
+    // Método para obtener las clientes que tienen cita programada de un abogado específico
+    getClientesPorAbogado(idAbogado) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .input('idAbogado', idAbogado)
+                .query(`
+                SELECT DISTINCT 
+                    CL.nombreCliente, 
+                    CL.aPCliente, 
+                    CL.aMCliente
+                FROM 
+                    tblCita C
+                JOIN 
+                    tblCliente CL ON C.idClienteFK = CL.idCliente
+                JOIN 
+                    tblAgenda A ON C.idAgendaFK = A.idAgenda
+                JOIN 
+                    tblEmpleado E ON A.idEmpleadoFK = E.idEmpleado
+                WHERE 
+                    E.idEmpleado = @idAbogado 
+                    AND C.estado = 'programada';
+            `);
+            return result.recordset;
+        });
+    }
+    // Método para canelar cita
+    cancelarCita(idCita) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const transaction = pool.transaction();
+            try {
+                yield transaction.begin();
+                // 1. Crear un request para actualizar el estado de la cita a "cancelada" en tblCita
+                const requestCita = transaction.request();
+                yield requestCita
+                    .input('idCita', idCita)
+                    .query(`
+                    UPDATE tblCita 
+                    SET estado = 'cancelada' 
+                    WHERE idCita = @idCita
+                `);
+                // 2. Crear un segundo request para actualizar el estado de la agenda a "disponible" en tblAgenda
+                const requestAgenda = transaction.request();
+                yield requestAgenda
+                    .input('idCita', idCita)
+                    .query(`
+                    UPDATE tblAgenda
+                    SET estado = 'Disponible'
+                    WHERE idAgenda = (
+                        SELECT idAgendaFK 
+                        FROM tblCita 
+                        WHERE idCita = @idCita
+                    )
+                `);
+                yield transaction.commit();
+                return { message: 'Cita cancelada y agenda actualizada correctamente' };
+            }
+            catch (error) {
+                yield transaction.rollback();
+                console.error('Error en la cancelación de la cita:', error);
+                throw new Error('Error en la cancelación de la cita: ' + error.message);
+            }
         });
     }
 }

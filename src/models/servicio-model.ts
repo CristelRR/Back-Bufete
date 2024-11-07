@@ -53,6 +53,21 @@ class ServicioModel {
             .query('SELECT * FROM tblServicio WHERE idServicio = @idServicio');
         return result.recordset;
     }
+
+    async getServiciosPorAbogado(idAbogado: number) {
+        const pool = await connectDB();
+        const result = await pool.request()
+            .input('idAbogado', idAbogado)
+            .query(`
+                SELECT s.idServicio, s.nombreServicio
+                FROM tblEmpleado e
+                JOIN tblEspecialidad_Servicio es ON e.idEspecialidadFK = es.idEspecialidad
+                JOIN tblServicio s ON es.idServicio = s.idServicio
+                WHERE e.idEmpleado = @idAbogado AND e.idRolFK = 2;  
+            `);
+        return result.recordset; 
+    }
+    
 }
 
 const servicioModel = new ServicioModel();

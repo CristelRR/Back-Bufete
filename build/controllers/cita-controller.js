@@ -145,5 +145,37 @@ class CitaController {
             }
         });
     }
+    // Método para obtener los clientes únicos con citas programadas para un abogado específico
+    getClientesPorAbogado(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { idAbogado } = req.params; // Obtiene el idAbogado de los parámetros de la URL
+                const clientes = yield cita_model_1.default.getClientesPorAbogado(Number(idAbogado)); // Llama al modelo para obtener clientes únicos
+                res.json(clientes); // Envía los clientes como respuesta en formato JSON
+            }
+            catch (error) {
+                console.error('Error al obtener clientes del abogado:', error);
+                res.status(500).json({ message: 'Error al obtener clientes del abogado' });
+            }
+        });
+    }
+    // Método para cancelar cita
+    cancelarCita(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { idCita } = req.body;
+                if (!idCita) {
+                    return res.status(400).json({ message: 'ID de cita no proporcionado' });
+                }
+                // Llama al método cancelarCita del modelo
+                const result = yield cita_model_1.default.cancelarCita(Number(idCita));
+                res.json(result); // Responde con el resultado de la operación
+            }
+            catch (error) {
+                console.error('Error al cancelar la cita:', error);
+                res.status(500).json({ message: 'Error al cancelar la cita' });
+            }
+        });
+    }
 }
 exports.citaController = new CitaController();

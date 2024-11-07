@@ -17,7 +17,9 @@ class CitaRoutes {
         this.router.get('/horarios/:idAbogado', citaController.getHorariosDisponiblesPorAbogado); 
         this.router.post('/crear-cita', citaController.crearCitaConTransaccion);
         this.router.get('/consultar-citaC/:idCliente', citaController.getCitasByCliente);
-        this.router.get('/consultar-citaA/:idAbogado', citaController.getCitasByAbogado);  
+        this.router.get('/consultar-citaA/:idAbogado', citaController.getCitasByAbogado); 
+        this.router.get('/clientes/abogado/:idAbogado', citaController.getClientesPorAbogado);
+        this.router.put('/cancelar', citaController.cancelarCita); 
     }
 }
 
