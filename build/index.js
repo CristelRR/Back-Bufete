@@ -17,27 +17,19 @@ const morgan_1 = __importDefault(require("morgan"));
 const cors_1 = __importDefault(require("cors"));
 const db_1 = require("./config/db");
 const rol_route_1 = __importDefault(require("./routes/rol-route"));
-const register_routes_1 = __importDefault(require("./routes/register-routes"));
-const login_routes_1 = __importDefault(require("./routes/login-routes"));
 const empleado_route_1 = __importDefault(require("./routes/empleado-route"));
 const cita_route_1 = __importDefault(require("./routes/cita-route"));
 const cliente_route_1 = __importDefault(require("./routes/cliente-route"));
 const usuario_route_1 = __importDefault(require("./routes/usuario-route"));
 const servicio_route_1 = __importDefault(require("./routes/servicio-route"));
 const especialidad_route_1 = __importDefault(require("./routes/especialidad-route"));
-const upload_file_routes_1 = __importDefault(require("./routes/upload-file-routes"));
 const agenda_route_1 = __importDefault(require("./routes/agenda-route"));
-const db_1 = require("./config/db");
-const rol_routes_1 = __importDefault(require("./routes/rol-routes"));
-const empleado_routes_1 = __importDefault(require("./routes/empleado-routes"));
-
 class Server {
     constructor() {
         this.app = (0, express_1.default)();
         this.config();
         this.routes();
         this.connectToDatabase();
-
     }
     config() {
         this.app.set('port', process.env.PORT || 3000);
