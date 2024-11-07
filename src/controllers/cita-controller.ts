@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import citaModel from "../models/cita-model";
+import { notificarClienteCita } from "./notificar-cita-cliente";
 
 class CitaController {
     async getCitas(req: Request, res: Response) {
@@ -69,14 +70,29 @@ class CitaController {
 
     async crearCitaConTransaccion(req: Request, res: Response) {
         try {
-            const citaData = req.body; 
-
+            const citaData = req.body;
+            
+            // Llama al modelo para crear la cita en una transacción
             const result = await citaModel.crearCitaConTransaccion(citaData);
+
+            // Obtén los datos del cliente desde la base de datos
+            const datosCliente = await citaModel.obtenerDatosCliente(citaData.idClienteFK);
             
-            res.status(201).json({ message: result.message });  
-        } catch (error: any) {  
+            if (!datosCliente || !datosCliente.emailCliente) {
+                return res.status(500).json({ message: "No se encontró el correo del cliente" });
+            }
+
+            // Envía la notificación por correo electrónico usando los datos del cliente
+            const { emailCliente, nombreCliente, aPCliente, aMCliente } = datosCliente;
+            const clienteNombre = `${nombreCliente} ${aPCliente} ${aMCliente}`;
+            const fechaCita = citaData.fechaCita; // Si tienes la fecha de la cita en citaData
+            const motivoCita = citaData.motivo;
+
+            await notificarClienteCita(emailCliente, clienteNombre, fechaCita, motivoCita);
+
+            res.status(201).json({ message: result.message, notification: 'Correo de notificación enviado' });
+        } catch (error: any) {
             console.error('Error al crear cita con transacción:', error);
-            
             res.status(500).json({ message: 'Error al crear cita con transacción', error: error.message });
         }
     }
@@ -89,6 +105,18 @@ class CitaController {
         } catch (error) {
             console.error('Error al obtener citas del cliente:', error);
             res.status(500).json({ message: 'Error al obtener citas del cliente' });
+        }
+    }
+
+    // Método para obtener las citas de un abogado específico
+    async getCitasByAbogado(req: Request, res: Response) {
+        try {
+            const { idAbogado } = req.params;  // Obtiene el idAbogado de los parámetros de la URL
+            const citas = await citaModel.getCitasByAbogado(Number(idAbogado));  // Llama al modelo con el idAbogado
+            res.json(citas);  // Devuelve las citas como respuesta
+        } catch (error) {
+            console.error('Error al obtener citas del abogado:', error);
+            res.status(500).json({ message: 'Error al obtener citas del abogado' });
         }
     }
 }

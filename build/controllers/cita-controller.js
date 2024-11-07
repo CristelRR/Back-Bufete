@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.citaController = void 0;
 const cita_model_1 = __importDefault(require("../models/cita-model"));
+const notificar_cita_cliente_1 = require("./notificar-cita-cliente");
 class CitaController {
     getCitas(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -96,8 +97,20 @@ class CitaController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const citaData = req.body;
+                // Llama al modelo para crear la cita en una transacción
                 const result = yield cita_model_1.default.crearCitaConTransaccion(citaData);
-                res.status(201).json({ message: result.message });
+                // Obtén los datos del cliente desde la base de datos
+                const datosCliente = yield cita_model_1.default.obtenerDatosCliente(citaData.idClienteFK);
+                if (!datosCliente || !datosCliente.emailCliente) {
+                    return res.status(500).json({ message: "No se encontró el correo del cliente" });
+                }
+                // Envía la notificación por correo electrónico usando los datos del cliente
+                const { emailCliente, nombreCliente, aPCliente, aMCliente } = datosCliente;
+                const clienteNombre = `${nombreCliente} ${aPCliente} ${aMCliente}`;
+                const fechaCita = citaData.fechaCita; // Si tienes la fecha de la cita en citaData
+                const motivoCita = citaData.motivo;
+                yield (0, notificar_cita_cliente_1.notificarClienteCita)(emailCliente, clienteNombre, fechaCita, motivoCita);
+                res.status(201).json({ message: result.message, notification: 'Correo de notificación enviado' });
             }
             catch (error) {
                 console.error('Error al crear cita con transacción:', error);
@@ -115,6 +128,20 @@ class CitaController {
             catch (error) {
                 console.error('Error al obtener citas del cliente:', error);
                 res.status(500).json({ message: 'Error al obtener citas del cliente' });
+            }
+        });
+    }
+    // Método para obtener las citas de un abogado específico
+    getCitasByAbogado(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { idAbogado } = req.params; // Obtiene el idAbogado de los parámetros de la URL
+                const citas = yield cita_model_1.default.getCitasByAbogado(Number(idAbogado)); // Llama al modelo con el idAbogado
+                res.json(citas); // Devuelve las citas como respuesta
+            }
+            catch (error) {
+                console.error('Error al obtener citas del abogado:', error);
+                res.status(500).json({ message: 'Error al obtener citas del abogado' });
             }
         });
     }

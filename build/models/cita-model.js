@@ -185,6 +185,65 @@ class CitaModel {
             return result.recordset;
         });
     }
+    // Para enviar correo
+    obtenerDatosCliente(idCliente) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .input('idCliente', idCliente)
+                .query(`
+                SELECT 
+                    nombreCliente, 
+                    correo AS emailCliente, 
+                    aPCliente, 
+                    aMCliente
+                FROM 
+                    tblCliente
+                WHERE 
+                    idCliente = @idCliente
+            `);
+            return result.recordset[0]; // Devuelve un solo registro
+        });
+    }
+    // Método para obtener las citas de un abogado específico
+    getCitasByAbogado(idAbogado) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .input('idAbogado', idAbogado) // Usamos el idAbogado para el filtro
+                .query(`
+                SELECT 
+                    C.idCita,
+                    C.motivo,
+                    C.estado AS estadoCita,
+                    CL.nombreCliente,
+                    CL.aPCliente,
+                    CL.aMCliente,
+                    A.fecha AS fechaCita,
+                    A.horaInicio,
+                    A.horaFinal,
+                    E.nombreEmpleado AS abogadoNombre,
+                    E.aPEmpleado AS abogadoApellidoPaterno,
+                    E.aMEmpleado AS abogadoApellidoMaterno,
+                    S.nombreServicio,
+                    S.descripcion AS descripcionServicio,
+                    S.costo AS costoServicio
+                FROM 
+                    tblCita C
+                JOIN 
+                    tblCliente CL ON C.idClienteFK = CL.idCliente
+                JOIN 
+                    tblAgenda A ON C.idAgendaFK = A.idAgenda
+                JOIN 
+                    tblEmpleado E ON A.idEmpleadoFK = E.idEmpleado
+                JOIN 
+                    tblServicio S ON C.idServicioFK = S.idServicio
+                WHERE 
+                    E.idEmpleado = @idAbogado;  -- Filtramos por el id del abogado
+            `);
+            return result.recordset;
+        });
+    }
 }
 const citaModel = new CitaModel();
 exports.default = citaModel;
