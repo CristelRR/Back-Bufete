@@ -1,5 +1,6 @@
 import cron from 'node-cron';
 import { connectDB } from '../config/db'; 
+import moment from 'moment';
 
 async function marcarCitasCompletadas() {
     const pool = await connectDB();
@@ -8,9 +9,11 @@ async function marcarCitasCompletadas() {
         const result = await pool.request().query(`
             UPDATE tblCita 
             SET estado = 'completada'
-            WHERE estado = 'programada' 
-              AND fechaCita < CAST(GETDATE() AS DATE)
-              AND horaCita < CAST(GETDATE() AS TIME)
+            WHERE estado = 'programada'
+              AND (
+                  (fechaCita < CAST(GETDATE() AS DATE)) OR 
+                  (fechaCita = CAST(GETDATE() AS DATE) AND horaCita <= CAST(GETDATE() AS TIME))
+              )
         `);
         console.log(`Citas completadas automáticamente: ${result.rowsAffected}`);
     } catch (error) {
@@ -18,8 +21,8 @@ async function marcarCitasCompletadas() {
     }
 }
 
-// Programa la tarea para ejecutarse todos los días a la medianoche
-cron.schedule('0 0 * * *', () => {
-    console.log("Ejecutando tarea para actualizar citas completadas...");
+// Programa la tarea para ejecutarse cada hora
+cron.schedule('0 * * * *', () => {
+    console.log(`[${moment().format('YYYY-MM-DD HH:mm:ss')}] Ejecutando tarea para actualizar citas completadas...`);
     marcarCitasCompletadas();
 });

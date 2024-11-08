@@ -42,37 +42,30 @@ class EmpleadoModel {
         return result;
     }
 
-    async updateEmpleado(empleadoData: any) {
+    async updateEmpleado(idEmpleado: number, empleadoData: any) {
         const pool = await connectDB();
         const result = await pool.request()
-            .input('idEmpleado', empleadoData.idEmpleado)
-            .input('fechaIngreso', empleadoData.fechaIngreso)
-            .input('numeroLicencia', empleadoData.numeroLicencia)
-            .input('correo', empleadoData.correo)
-            .input('nombreEmpleado', empleadoData.nombreEmpleado)
-            .input('aPEmpleado', empleadoData.aPEmpleado)
-            .input('aMEmpleado', empleadoData.aMEmpleado)
-            .input('telefono', empleadoData.telefono)
-            .input('pass', empleadoData.pass)
-            .input('idRolFK', empleadoData.idRolFK)
-            .input('idEspecialidadFK', empleadoData.idEspecialidadFK)
+            .input('idEmpleado', idEmpleado)                      // Identificador del empleado
+            .input('correo', empleadoData.correo)                 // Campo editable
+            .input('telefono', empleadoData.telefono)             // Campo editable
+            .input('idEspecialidadFK', empleadoData.idEspecialidadFK) // Campo editable
+            .input('nombreEmpleado', empleadoData.nombreEmpleado) // Campo editable
+            .input('aPEmpleado', empleadoData.aPEmpleado)         // Campo editable
+            .input('aMEmpleado', empleadoData.aMEmpleado)         // Campo editable
             .query(`
                 UPDATE tblEmpleado 
                 SET 
-                    fechaIngreso = @fechaIngreso,
-                    numeroLicencia = @numeroLicencia,
                     correo = @correo,
+                    telefono = @telefono,
+                    idEspecialidadFK = @idEspecialidadFK,
                     nombreEmpleado = @nombreEmpleado,
                     aPEmpleado = @aPEmpleado,
-                    aMEmpleado = @aMEmpleado,
-                    telefono = @telefono,
-                    pass = @pass,
-                    idRolFK = @idRolFK,
-                    idEspecialidadFK = @idEspecialidadFK 
+                    aMEmpleado = @aMEmpleado
                 WHERE idEmpleado = @idEmpleado
             `);
         return result;
     }
+    
 
     async deleteEmpleado(idEmpleado: number) {
         const pool = await connectDB();

@@ -74,9 +74,12 @@ class EmpleadoController {
     updateEmpleado(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { idEmpleado } = req.params; // Obtén el ID del parámetro de la URL
-                const empleadoData = Object.assign(Object.assign({}, req.body), { idEmpleado: Number(idEmpleado) }); // Asegúrate de que sea un número
-                yield empleado_model_1.default.updateEmpleado(empleadoData);
+                const idEmpleado = Number(req.params.idEmpleado); // Obtén el ID del parámetro de la URL
+                if (isNaN(idEmpleado)) {
+                    return res.status(400).json({ message: 'ID inválido' });
+                }
+                const empleadoData = req.body; // Datos editables del empleado
+                yield empleado_model_1.default.updateEmpleado(idEmpleado, empleadoData);
                 res.json({ message: 'Empleado actualizado exitosamente' });
             }
             catch (error) {
