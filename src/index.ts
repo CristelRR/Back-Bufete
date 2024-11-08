@@ -11,6 +11,7 @@ import servicioRoutes  from './routes/servicio-route';
 import especialidadRoutes  from './routes/especialidad-route';
 import agendaRoutes from './routes/agenda-route';
 
+
 class Server {
     public app: Application; 
 

@@ -14,6 +14,7 @@
   "dependencies": {
     "mongoose": "^8.7.2",
     "mysql2": "^3.11.3",
+    "node-cron": "^3.0.3",
     "nodemailer": "^6.9.16"
   },
   "devDependencies": {
@@ -22,6 +23,7 @@
     "@types/morgan": "^1.9.9",
     "@types/mssql": "^9.1.5",
     "@types/node": "^22.7.7",
+    "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^6.4.16",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

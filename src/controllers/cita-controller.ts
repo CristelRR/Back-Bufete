@@ -149,6 +149,31 @@ class CitaController {
         }
     }
 
+    // Obtener servicios de un cliente
+     // Método para obtener los servicios asociados a las citas de un cliente
+     async getServiciosPorCitasDeCliente(req: Request, res: Response) {
+        try {
+            const { idCliente } = req.params;
+            const servicios = await citaModel.getServiciosPorCitasDeCliente(Number(idCliente));
+            res.json(servicios);
+        } catch (error) {
+            console.error('Error al obtener servicios asociados a las citas del cliente:', error);
+            res.status(500).json({ message: 'Error al obtener servicios asociados a las citas del cliente' });
+        }
+    }
+
+    // Método para obtener todas las citas con información detallada
+    async getAllCitas(req: Request, res: Response) {
+        try {
+            const citas = await citaModel.getAllCitas();
+            res.json(citas);
+        } catch (error) {
+            console.error('Error al obtener todas las citas:', error);
+            res.status(500).json({ message: 'Error al obtener todas las citas' });
+        }
+    }
+
+
 }
 
 export const citaController = new CitaController();

@@ -19,6 +19,8 @@ class CitaRoutes {
         this.router.get('/consultar-citaA/:idAbogado', cita_controller_1.citaController.getCitasByAbogado);
         this.router.get('/clientes/abogado/:idAbogado', cita_controller_1.citaController.getClientesPorAbogado);
         this.router.put('/cancelar', cita_controller_1.citaController.cancelarCita);
+        this.router.get('/clientes/:idCliente/servicios', cita_controller_1.citaController.getServiciosPorCitasDeCliente);
+        this.router.get("/detalladas", cita_controller_1.citaController.getAllCitas);
     }
 }
 const citaRoutes = new CitaRoutes();

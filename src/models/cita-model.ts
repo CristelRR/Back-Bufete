@@ -153,7 +153,8 @@ class CitaModel {
                     E.aMEmpleado AS abogadoApellidoMaterno,
                     S.nombreServicio,
                     S.descripcion AS descripcionServicio,
-                    S.costo AS costoServicio
+                    S.costo AS costoServicio,
+                    C.idServicioFK
                 FROM 
                     tblCita C
                 JOIN 
@@ -293,6 +294,61 @@ class CitaModel {
             console.error('Error en la cancelación de la cita:', error);
             throw new Error('Error en la cancelación de la cita: ' + error.message);
         }
+    }
+
+    // Método para obtener los servicios únicos asociados al cliente a través de sus citas
+    async getServiciosPorCitasDeCliente(idCliente: number) {
+        const pool = await connectDB();
+        const result = await pool.request()
+            .input('idCliente', idCliente)
+            .query(`
+                SELECT DISTINCT 
+                    S.idServicio,
+                    S.nombreServicio
+                FROM 
+                    tblCita C
+                JOIN 
+                    tblCliente CL ON C.idClienteFK = CL.idCliente
+                JOIN 
+                    tblServicio S ON C.idServicioFK = S.idServicio
+                WHERE 
+                    CL.idCliente = @idCliente;
+            `);
+        return result.recordset;
+    }
+
+    async getAllCitas() {
+        const pool = await connectDB();
+        const result = await pool.request().query(`
+            SELECT 
+                C.idCita,
+                C.motivo,
+                C.estado AS estadoCita,
+                CL.nombreCliente,
+                CL.aPCliente AS apellidoPaternoCliente,
+                CL.aMCliente AS apellidoMaternoCliente,
+                A.fecha AS fechaCita,
+                A.horaInicio,
+                A.horaFinal,
+                E.nombreEmpleado AS abogadoNombre,
+                E.aPEmpleado AS abogadoApellidoPaterno,
+                E.aMEmpleado AS abogadoApellidoMaterno,
+                S.nombreServicio,
+                S.descripcion AS descripcionServicio,
+                S.costo AS costoServicio,
+	            C.idServicioFK
+            FROM 
+                tblCita C
+            JOIN 
+                tblCliente CL ON C.idClienteFK = CL.idCliente
+            JOIN 
+                tblAgenda A ON C.idAgendaFK = A.idAgenda
+            JOIN 
+                tblEmpleado E ON A.idEmpleadoFK = E.idEmpleado
+            JOIN 
+                tblServicio S ON C.idServicioFK = S.idServicio;
+        `);
+        return result.recordset;
     }
     
     

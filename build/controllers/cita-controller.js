@@ -177,5 +177,33 @@ class CitaController {
             }
         });
     }
+    // Obtener servicios de un cliente
+    // Método para obtener los servicios asociados a las citas de un cliente
+    getServiciosPorCitasDeCliente(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { idCliente } = req.params;
+                const servicios = yield cita_model_1.default.getServiciosPorCitasDeCliente(Number(idCliente));
+                res.json(servicios);
+            }
+            catch (error) {
+                console.error('Error al obtener servicios asociados a las citas del cliente:', error);
+                res.status(500).json({ message: 'Error al obtener servicios asociados a las citas del cliente' });
+            }
+        });
+    }
+    // Método para obtener todas las citas con información detallada
+    getAllCitas(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const citas = yield cita_model_1.default.getAllCitas();
+                res.json(citas);
+            }
+            catch (error) {
+                console.error('Error al obtener todas las citas:', error);
+                res.status(500).json({ message: 'Error al obtener todas las citas' });
+            }
+        });
+    }
 }
 exports.citaController = new CitaController();
