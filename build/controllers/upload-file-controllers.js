@@ -14,8 +14,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.expedienteController = void 0;
 const db_1 = require("../config/db");
-const path_1 = __importDefault(require("path"));
+const storage_1 = require("@google-cloud/storage");
+const multer_1 = __importDefault(require("multer"));
 const mssql_1 = __importDefault(require("mssql"));
+const storage = new storage_1.Storage();
+const bucket = storage.bucket('nombre-del-bucket');
+const upload = (0, multer_1.default)({ storage: multer_1.default.memoryStorage() });
 class ExpedienteController {
     crearExpediente(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -26,18 +30,31 @@ class ExpedienteController {
                     res.status(400).json({ error: 'Todos los campos son obligatorios' });
                     return;
                 }
-                const archivoPath = path_1.default.join(__dirname, '../uploads', archivo.filename);
-                const pool = yield (0, db_1.connectDB)();
-                const query = `
-                INSERT INTO tlbExpedientes (nombreExpediente, numeroExpediente, archivoPath)
-                VALUES (@nombreExpediente, @numeroExpediente, @archivoPath)
-            `;
-                yield pool.request()
-                    .input('nombreExpediente', mssql_1.default.NVarChar, nombreExpediente)
-                    .input('numeroExpediente', mssql_1.default.NVarChar, numeroExpediente)
-                    .input('archivoPath', mssql_1.default.NVarChar, archivoPath)
-                    .query(query);
-                res.status(201).json({ message: 'Expediente creado exitosamente' });
+                const fileName = `${Date.now()}_${archivo.originalname}`;
+                const fileUpload = bucket.file(fileName);
+                const stream = fileUpload.createWriteStream({
+                    metadata: {
+                        contentType: archivo.mimetype,
+                    }
+                });
+                stream.on('error', (err) => {
+                    return res.status(500).json({ error: 'Error al subir el archivo: ' + err.message });
+                });
+                stream.on('finish', () => __awaiter(this, void 0, void 0, function* () {
+                    const fileUrl = `https://storage.googleapis.com/${bucket.name}/${fileUpload.name}`;
+                    const pool = yield (0, db_1.connectDB)();
+                    const query = `
+                    INSERT INTO tlbExpedientes (nombreExpediente, numeroExpediente, archivoPath)
+                    VALUES (@nombreExpediente, @numeroExpediente, @archivoPath)
+                `;
+                    yield pool.request()
+                        .input('nombreExpediente', mssql_1.default.NVarChar, nombreExpediente)
+                        .input('numeroExpediente', mssql_1.default.NVarChar, numeroExpediente)
+                        .input('archivoPath', mssql_1.default.NVarChar, fileUrl)
+                        .query(query);
+                    res.status(201).json({ message: 'Expediente creado exitosamente', fileUrl });
+                }));
+                stream.end(archivo.buffer);
             }
             catch (error) {
                 console.error('Error al crear el expediente:', error);
@@ -65,7 +82,7 @@ class ExpedienteController {
                 const pool = yield (0, db_1.connectDB)();
                 const result = yield pool.request()
                     .input('id', mssql_1.default.Int, id)
-                    .query('DELETE FROM Expedientes WHERE id = @id');
+                    .query('DELETE FROM tlbExpedientes WHERE id = @id');
                 if (result.rowsAffected[0] === 0) {
                     res.status(404).json({ error: 'Expediente no encontrado' });
                     return;
@@ -79,4 +96,5 @@ class ExpedienteController {
         });
     }
 }
+// Exportar la instancia del controlador
 exports.expedienteController = new ExpedienteController();
