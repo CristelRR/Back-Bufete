@@ -62,8 +62,12 @@ class ClienteController {
     updateCliente(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const clienteData = req.body; // Asegúrate de validar los datos aquí
-                yield cliente_model_1.default.updateCliente(clienteData);
+                const idCliente = Number(req.params.idCliente); // Obtiene el ID del cliente desde los parámetros de la URL
+                if (isNaN(idCliente)) {
+                    return res.status(400).json({ message: 'ID inválido' });
+                }
+                const clienteData = req.body; // Obtiene los datos del cliente desde el cuerpo de la solicitud
+                yield cliente_model_1.default.updateCliente(idCliente, clienteData); // Llama al método de actualización en el modelo
                 res.json({ message: 'Cliente actualizado exitosamente' });
             }
             catch (error) {

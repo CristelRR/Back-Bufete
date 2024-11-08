@@ -44,6 +44,23 @@ class ServicioController {
             res.status(500).json({ message: 'Error al eliminar servicio' });
         }
     }
+
+    // Método para obtener servicios de un abogado específico
+    async getServiciosPorAbogado(req: Request, res: Response) {
+        try {
+            const idAbogado = parseInt(req.params.idAbogado, 10);
+            if (isNaN(idAbogado)) {
+                return res.status(400).json({ message: 'ID de abogado inválido' });
+            }
+
+            const servicios = await servicioModel.getServiciosPorAbogado(idAbogado);
+            res.json(servicios);
+        } catch (error) {
+            console.error('Error al obtener servicios por abogado:', error);
+            res.status(500).json({ message: 'Error al obtener servicios por abogado' });
+        }
+    }
+
 }
 
 export const servicioController = new ServicioController();

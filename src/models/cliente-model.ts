@@ -19,7 +19,6 @@ class ClienteModel {
     async crearCliente(clienteData: any) {
         const pool = await connectDB();
         const result = await pool.request()
-            .input('idCliente', clienteData.idCliente)
             .input('nombreCliente', clienteData.nombreCliente)
             .input('aPCliente', clienteData.aPCliente)
             .input('aMCliente', clienteData.aMCliente)
@@ -30,24 +29,22 @@ class ClienteModel {
             .input('idRolFK', clienteData.idRolFK)
             .query(`
                 INSERT INTO tblCliente 
-                (idCliente, nombreCliente, aPCliente, aMCliente, direccion, correo, telefono, pass, idRolFK) 
-                VALUES (@idCliente, @nombreCliente, @aPCliente, @aMCliente, @direccion, @correo, @telefono, @pass, @idRolFK)
+                (nombreCliente, aPCliente, aMCliente, direccion, correo, telefono, pass, idRolFK) 
+                VALUES (@nombreCliente, @aPCliente, @aMCliente, @direccion, @correo, @telefono, @pass, @idRolFK)
             `);
         return result;
     }
 
-    async updateCliente(clienteData: any) {
+    async updateCliente(idCliente: number, clienteData: any) {
         const pool = await connectDB();
         const result = await pool.request()
-            .input('idCliente', clienteData.idCliente)
-            .input('nombreCliente', clienteData.nombreCliente)
-            .input('aPCliente', clienteData.aPCliente)
-            .input('aMCliente', clienteData.aMCliente)
-            .input('direccion', clienteData.direccion)
-            .input('correo', clienteData.correo)
-            .input('telefono', clienteData.telefono)
-            .input('pass', clienteData.pass)
-            .input('idRolFK', clienteData.idRolFK)
+            .input('idCliente', idCliente)                         // Identificador del cliente (no editable)
+            .input('nombreCliente', clienteData.nombreCliente)     // Campo editable
+            .input('aPCliente', clienteData.aPCliente)             // Campo editable
+            .input('aMCliente', clienteData.aMCliente)             // Campo editable
+            .input('direccion', clienteData.direccion)             // Campo editable
+            .input('correo', clienteData.correo)                   // Campo editable
+            .input('telefono', clienteData.telefono)               // Campo editable
             .query(`
                 UPDATE tblCliente 
                 SET 
@@ -56,13 +53,12 @@ class ClienteModel {
                     aMCliente = @aMCliente,
                     direccion = @direccion,
                     correo = @correo,
-                    telefono = @telefono,
-                    pass = @pass,
-                    idRolFK = @idRolFK 
+                    telefono = @telefono
                 WHERE idCliente = @idCliente
             `);
-        return result;
+        return result; // Retorna el resultado de la consulta
     }
+    
 
     async deleteCliente(idCliente: number) {
         const pool = await connectDB();

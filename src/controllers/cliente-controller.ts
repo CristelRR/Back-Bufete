@@ -25,8 +25,13 @@ class ClienteController {
 
     async updateCliente(req: Request, res: Response) {
         try {
-            const clienteData = req.body; // Asegúrate de validar los datos aquí
-            await clienteModel.updateCliente(clienteData);
+            const idCliente = Number(req.params.idCliente); // Obtiene el ID del cliente desde los parámetros de la URL
+            if (isNaN(idCliente)) {
+                return res.status(400).json({ message: 'ID inválido' });
+            }
+
+            const clienteData = req.body; // Obtiene los datos del cliente desde el cuerpo de la solicitud
+            await clienteModel.updateCliente(idCliente, clienteData); // Llama al método de actualización en el modelo
             res.json({ message: 'Cliente actualizado exitosamente' });
         } catch (error) {
             console.error('Error al actualizar cliente:', error);

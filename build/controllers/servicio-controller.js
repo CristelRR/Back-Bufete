@@ -66,5 +66,22 @@ class ServicioController {
             }
         });
     }
+    // Método para obtener servicios de un abogado específico
+    getServiciosPorAbogado(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const idAbogado = parseInt(req.params.idAbogado, 10);
+                if (isNaN(idAbogado)) {
+                    return res.status(400).json({ message: 'ID de abogado inválido' });
+                }
+                const servicios = yield servicio_model_1.default.getServiciosPorAbogado(idAbogado);
+                res.json(servicios);
+            }
+            catch (error) {
+                console.error('Error al obtener servicios por abogado:', error);
+                res.status(500).json({ message: 'Error al obtener servicios por abogado' });
+            }
+        });
+    }
 }
 exports.servicioController = new ServicioController();

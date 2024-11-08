@@ -64,8 +64,34 @@ class CitaModel {
             const pool = yield (0, db_1.connectDB)();
             const result = yield pool.request()
                 .input('idCita', idCita)
-                .query('SELECT * FROM tblCita WHERE idCita = @idCita');
-            return result.recordset;
+                .query(`
+                SELECT 
+                    C.idCita,
+                    C.motivo,
+                    C.estado,
+                    C.idClienteFK,
+                    C.idAgendaFK,
+                    C.idServicioFK,
+                    A.fecha AS fechaCita,
+                    A.horaInicio AS horaCita,
+                    E.nombreEmpleado AS abogadoNombre,
+                    E.aPEmpleado AS abogadoApellidoPaterno,
+                    E.aMEmpleado AS abogadoApellidoMaterno,
+                    S.nombreServicio,
+                    S.descripcion AS descripcionServicio,
+                    S.costo AS costoServicio
+                FROM 
+                    tblCita C
+                JOIN 
+                    tblAgenda A ON C.idAgendaFK = A.idAgenda
+                JOIN 
+                    tblEmpleado E ON A.idEmpleadoFK = E.idEmpleado
+                JOIN 
+                    tblServicio S ON C.idServicioFK = S.idServicio
+                WHERE 
+                    C.idCita = @idCita
+            `);
+            return result.recordset[0]; // Devuelve el primer (y único) registro
         });
     }
     getAbogadosPorServicio(idServicio) {
@@ -117,16 +143,19 @@ class CitaModel {
                 // Crear un "request" desde la transacción
                 const request = transaction.request();
                 // 1. Crear la cita en tblCita con idServicioFK incluido
-                yield request
+                const result = yield request
                     .input('motivo', citaData.motivo)
                     .input('estado', citaData.estado)
                     .input('idClienteFK', citaData.idClienteFK)
                     .input('idAgendaFK', citaData.idAgendaFK)
                     .input('idServicioFK', citaData.idServicioFK) // Nuevo parámetro
                     .query(`
-                    INSERT INTO tblCita (motivo, estado, idClienteFK, idAgendaFK, idServicioFK) 
+                    INSERT INTO tblCita (motivo, estado, idClienteFK, idAgendaFK, idServicioFK)
+                    OUTPUT inserted.idCita
                     VALUES (@motivo, @estado, @idClienteFK, @idAgendaFK, @idServicioFK)
                 `);
+                // Obtén el ID de la cita recién creada
+                const idCita = result.recordset[0].idCita;
                 // 2. Actualizar el estado de la agenda en tblAgenda
                 yield request
                     .input('idAgenda', citaData.idAgendaFK)
@@ -138,7 +167,7 @@ class CitaModel {
                 `);
                 // Confirmar la transacción si todo ha salido bien
                 yield transaction.commit();
-                return { message: 'Cita creada y agenda actualizada correctamente' };
+                return { message: 'Cita creada y agenda actualizada correctamente', idCita };
             }
             catch (error) {
                 // Revertir la transacción si ocurre un error
@@ -168,7 +197,8 @@ class CitaModel {
                     E.aMEmpleado AS abogadoApellidoMaterno,
                     S.nombreServicio,
                     S.descripcion AS descripcionServicio,
-                    S.costo AS costoServicio
+                    S.costo AS costoServicio,
+                    C.idServicioFK
                 FROM 
                     tblCita C
                 JOIN 
@@ -183,6 +213,227 @@ class CitaModel {
                     C.idClienteFK = @idCliente;
             `);
             return result.recordset;
+        });
+    }
+    // Para enviar correo
+    obtenerDatosCliente(idCliente) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .input('idCliente', idCliente)
+                .query(`
+                SELECT 
+                    nombreCliente, 
+                    correo AS emailCliente, 
+                    aPCliente, 
+                    aMCliente
+                FROM 
+                    tblCliente
+                WHERE 
+                    idCliente = @idCliente
+            `);
+            return result.recordset[0]; // Devuelve un solo registro
+        });
+    }
+    // Método para obtener las citas de un abogado específico
+    getCitasByAbogado(idAbogado) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .input('idAbogado', idAbogado) // Usamos el idAbogado para el filtro
+                .query(`
+                SELECT 
+                    C.idCita,
+                    C.motivo,
+                    C.estado AS estadoCita,
+                    CL.nombreCliente,
+                    CL.aPCliente,
+                    CL.aMCliente,
+                    A.fecha AS fechaCita,
+                    A.horaInicio,
+                    A.horaFinal,
+                    E.nombreEmpleado AS abogadoNombre,
+                    E.aPEmpleado AS abogadoApellidoPaterno,
+                    E.aMEmpleado AS abogadoApellidoMaterno,
+                    S.nombreServicio,
+                    S.descripcion AS descripcionServicio,
+                    S.costo AS costoServicio,
+                    C.idServicioFK
+                FROM 
+                    tblCita C
+                JOIN 
+                    tblCliente CL ON C.idClienteFK = CL.idCliente
+                JOIN 
+                    tblAgenda A ON C.idAgendaFK = A.idAgenda
+                JOIN 
+                    tblEmpleado E ON A.idEmpleadoFK = E.idEmpleado
+                JOIN 
+                    tblServicio S ON C.idServicioFK = S.idServicio
+                WHERE 
+                    E.idEmpleado = @idAbogado;  -- Filtramos por el id del abogado
+            `);
+            return result.recordset;
+        });
+    }
+    // Método para obtener las clientes que tienen cita programada de un abogado específico
+    getClientesPorAbogado(idAbogado) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .input('idAbogado', idAbogado)
+                .query(`
+                SELECT DISTINCT 
+                    CL.nombreCliente, 
+                    CL.aPCliente, 
+                    CL.aMCliente
+                FROM 
+                    tblCita C
+                JOIN 
+                    tblCliente CL ON C.idClienteFK = CL.idCliente
+                JOIN 
+                    tblAgenda A ON C.idAgendaFK = A.idAgenda
+                JOIN 
+                    tblEmpleado E ON A.idEmpleadoFK = E.idEmpleado
+                WHERE 
+                    E.idEmpleado = @idAbogado 
+                    AND C.estado = 'programada';
+            `);
+            return result.recordset;
+        });
+    }
+    // Método para canelar cita
+    cancelarCita(idCita) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const transaction = pool.transaction();
+            try {
+                yield transaction.begin();
+                // 1. Crear un request para actualizar el estado de la cita a "cancelada" en tblCita
+                const requestCita = transaction.request();
+                yield requestCita
+                    .input('idCita', idCita)
+                    .query(`
+                    UPDATE tblCita 
+                    SET estado = 'cancelada' 
+                    WHERE idCita = @idCita
+                `);
+                // 2. Crear un segundo request para actualizar el estado de la agenda a "disponible" en tblAgenda
+                const requestAgenda = transaction.request();
+                yield requestAgenda
+                    .input('idCita', idCita)
+                    .query(`
+                    UPDATE tblAgenda
+                    SET estado = 'Disponible'
+                    WHERE idAgenda = (
+                        SELECT idAgendaFK 
+                        FROM tblCita 
+                        WHERE idCita = @idCita
+                    )
+                `);
+                yield transaction.commit();
+                return { message: 'Cita cancelada y agenda actualizada correctamente' };
+            }
+            catch (error) {
+                yield transaction.rollback();
+                console.error('Error en la cancelación de la cita:', error);
+                throw new Error('Error en la cancelación de la cita: ' + error.message);
+            }
+        });
+    }
+    // Método para obtener los servicios únicos asociados al cliente a través de sus citas
+    getServiciosPorCitasDeCliente(idCliente) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .input('idCliente', idCliente)
+                .query(`
+                SELECT DISTINCT 
+                    S.idServicio,
+                    S.nombreServicio
+                FROM 
+                    tblCita C
+                JOIN 
+                    tblCliente CL ON C.idClienteFK = CL.idCliente
+                JOIN 
+                    tblServicio S ON C.idServicioFK = S.idServicio
+                WHERE 
+                    CL.idCliente = @idCliente;
+            `);
+            return result.recordset;
+        });
+    }
+    getAllCitas() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request().query(`
+            SELECT 
+                C.idCita,
+                C.motivo,
+                C.estado AS estadoCita,
+                CL.nombreCliente,
+                CL.aPCliente AS apellidoPaternoCliente,
+                CL.aMCliente AS apellidoMaternoCliente,
+                A.fecha AS fechaCita,
+                A.horaInicio,
+                A.horaFinal,
+                E.nombreEmpleado AS abogadoNombre,
+                E.aPEmpleado AS abogadoApellidoPaterno,
+                E.aMEmpleado AS abogadoApellidoMaterno,
+                S.nombreServicio,
+                S.descripcion AS descripcionServicio,
+                S.costo AS costoServicio,
+	            C.idServicioFK
+            FROM 
+                tblCita C
+            JOIN 
+                tblCliente CL ON C.idClienteFK = CL.idCliente
+            JOIN 
+                tblAgenda A ON C.idAgendaFK = A.idAgenda
+            JOIN 
+                tblEmpleado E ON A.idEmpleadoFK = E.idEmpleado
+            JOIN 
+                tblServicio S ON C.idServicioFK = S.idServicio;
+        `);
+            return result.recordset;
+        });
+    }
+    getFullCitaDetails(idCita) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .input('idCita', idCita)
+                .query(`
+                SELECT 
+                    C.idCita,
+                    C.motivo,
+                    C.estado AS estadoCita,
+                    CL.nombreCliente,
+                    CL.aPCliente,
+                    CL.aMCliente,
+                    A.fecha AS fechaCita,
+                    A.horaInicio,
+                    A.horaFinal,
+                    E.nombreEmpleado AS abogadoNombre,
+                    E.aPEmpleado AS abogadoApellidoPaterno,
+                    E.aMEmpleado AS abogadoApellidoMaterno,
+                    S.nombreServicio,
+                    S.descripcion AS descripcionServicio,
+                    S.costo AS costoServicio,
+                    C.idServicioFK
+                FROM 
+                    tblCita C
+                JOIN 
+                    tblCliente CL ON C.idClienteFK = CL.idCliente
+                JOIN 
+                    tblAgenda A ON C.idAgendaFK = A.idAgenda
+                JOIN 
+                    tblEmpleado E ON A.idEmpleadoFK = E.idEmpleado
+                JOIN 
+                    tblServicio S ON C.idServicioFK = S.idServicio
+                WHERE 
+                    C.idCita = @idCita;
+            `);
+            return result.recordset[0]; // Devuelve el primer (y único) registro
         });
     }
 }
