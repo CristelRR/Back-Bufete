@@ -14,9 +14,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const morgan_1 = __importDefault(require("morgan"));
-const cors_1 = __importDefault(require("cors"));
-const db_1 = require("./config/db");
-const rol_routes_1 = __importDefault(require("./routes/rol-routes"));
 const db_1 = require("./config/db");
 const rol_route_1 = __importDefault(require("./routes/rol-route"));
 const empleado_route_1 = __importDefault(require("./routes/empleado-route"));
@@ -25,10 +22,6 @@ const cliente_route_1 = __importDefault(require("./routes/cliente-route"));
 const usuario_route_1 = __importDefault(require("./routes/usuario-route"));
 const servicio_route_1 = __importDefault(require("./routes/servicio-route"));
 const especialidad_route_1 = __importDefault(require("./routes/especialidad-route"));
-const agenda_route_1 = __importDefault(require("./routes/agenda-route"));
-const db_1 = require("./config/db");
-const empleado_routes_1 = __importDefault(require("./routes/empleado-routes"));
-const upload_file_routes_1 = __importDefault(require("./routes/upload-file-routes"));
 class Server {
     constructor() {
         this.app = (0, express_1.default)();
@@ -38,8 +31,6 @@ class Server {
     }
     config() {
         this.app.set('port', process.env.PORT || 3000);
-        this.app.use((0, cors_1.default)());
-        this.app.use((0, cors_1.default)());
         this.app.use(express_1.default.json());
         this.app.use(express_1.default.urlencoded({ extended: false }));
         this.app.use((0, morgan_1.default)('dev'));
@@ -61,11 +52,13 @@ class Server {
         this.app.get('/', (req, res) => {
             res.send('¡Hola, mundo!');
         });
-        this.app.use('/roles', rol_routes_1.default);
-        this.app.use('/empleados', empleado_routes_1.default);
-        this.app.use('/register', register_routes_1.default);
-        this.app.use('/login', login_routes_1.default);
-        this.app.use('/expedientes', upload_file_routes_1.default);
+        this.app.use('/roles', rol_route_1.default);
+        this.app.use('/empleados', empleado_route_1.default);
+        this.app.use('/clientes', cliente_route_1.default);
+        this.app.use('/citas', cita_route_1.default);
+        this.app.use('/usuarios', usuario_route_1.default);
+        this.app.use('/servicios', servicio_route_1.default);
+        this.app.use('/especialidades', especialidad_route_1.default);
     }
     start() {
         this.app.listen(this.app.get('port'), () => {

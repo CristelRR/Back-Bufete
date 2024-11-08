@@ -9,15 +9,15 @@ import clienteRoutes from './routes/cliente-route';
 import usuarioRoutes from './routes/usuario-route';
 import servicioRoutes  from './routes/servicio-route';
 import especialidadRoutes  from './routes/especialidad-route';
-import pagoRoutes from './routes/gestionPago-route';
 import agendaRoutes from './routes/agenda-route';
-import registerRoutes from './routes/register-routes';
 import loginRoutes from './routes/login-routes';
+import registerRoutes from './routes/register-routes';
 import expedienteRoutes from './routes/upload-file-routes';
+import pagoRoutes from './routes/gestionPago-route';
 
 
 class Server {
-    public app: Application;
+    public app: Application; 
 
     constructor() {
         this.app = express();
@@ -28,8 +28,6 @@ class Server {
 
     config(): void {
         this.app.set('port', process.env.PORT || 3000);
-        this.app.use(cors({ origin: 'http://localhost:4200' })); //Habilitado para cors
-        this.app.use(cors());
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: false }));
         this.app.use(morgan('dev'));
@@ -56,18 +54,14 @@ class Server {
         this.app.use('/login', loginRoutes);
         this.app.use('/roles', rolRoutes);
         this.app.use('/empleados', empleadoRoutes);
+        this.app.use('/roles', rolRoutes);
+        this.app.use('/empleados', empleadoRoutes);
         this.app.use('/clientes', clienteRoutes); 
         this.app.use('/citas', citaRoutes); 
         this.app.use('/usuarios', usuarioRoutes);
         this.app.use('/servicios', servicioRoutes);
         this.app.use('/especialidades', especialidadRoutes);
-        this.app.use('/register', registerRoutes);
-        this.app.use('/login', loginRoutes);
-        this.app.use('/expedientes', expedienteRoutes);
-        this.app.use('/roles', rolRoutes);
-        this.app.use('/register', registerRoutes);
-        this.app.use('/login', loginRoutes);
-        this.app.use('/expedientes', expedienteRoutes);
+        this.app.use('/agendas', agendaRoutes);
     }
 
     start(): void {
