@@ -26,6 +26,8 @@ const especialidad_route_1 = __importDefault(require("./routes/especialidad-rout
 const agenda_route_1 = __importDefault(require("./routes/agenda-route"));
 const login_routes_1 = __importDefault(require("./routes/login-routes"));
 const register_routes_1 = __importDefault(require("./routes/register-routes"));
+const upload_file_routes_1 = __importDefault(require("./routes/upload-file-routes"));
+const gestionPago_route_1 = __importDefault(require("./routes/gestionPago-route"));
 class Server {
     constructor() {
         this.app = (0, express_1.default)();
@@ -35,8 +37,8 @@ class Server {
     }
     config() {
         this.app.set('port', process.env.PORT || 3000);
-        this.app.use(express_1.default.json());
-        this.app.use(express_1.default.urlencoded({ extended: false }));
+        this.app.use(express_1.default.json({ limit: '50mb' }));
+        this.app.use(express_1.default.urlencoded({ limit: '50mb', extended: true }));
         this.app.use((0, morgan_1.default)('dev'));
         this.app.use((0, cors_1.default)());
     }
@@ -60,16 +62,14 @@ class Server {
         this.app.use('/empleados', empleado_route_1.default);
         this.app.use('/register', register_routes_1.default);
         this.app.use('/login', login_routes_1.default);
-        this.app.use('/roles', rol_route_1.default);
-        this.app.use('/empleados', empleado_route_1.default);
-        this.app.use('/roles', rol_route_1.default);
-        this.app.use('/empleados', empleado_route_1.default);
         this.app.use('/clientes', cliente_route_1.default);
         this.app.use('/citas', cita_route_1.default);
         this.app.use('/usuarios', usuario_route_1.default);
         this.app.use('/servicios', servicio_route_1.default);
         this.app.use('/especialidades', especialidad_route_1.default);
         this.app.use('/agendas', agenda_route_1.default);
+        this.app.use('/pagos', gestionPago_route_1.default);
+        this.app.use('/expedientes', upload_file_routes_1.default);
     }
     start() {
         this.app.listen(this.app.get('port'), () => {

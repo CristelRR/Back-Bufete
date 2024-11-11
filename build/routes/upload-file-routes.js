@@ -13,9 +13,12 @@ class ExpedienteRoutes {
         this.config();
     }
     config() {
-        this.router.post('/expedientes', this.upload.single('archivo'), upload_file_controllers_1.expedienteController.crearExpediente);
+        this.router.post('/', upload_file_controllers_1.expedienteController.crearExpediente);
         this.router.get('/', upload_file_controllers_1.expedienteController.obtenerExpedientes);
-        this.router.delete('/expedientes/:id', upload_file_controllers_1.expedienteController.eliminarExpediente);
+        this.router.get('/documento/:idDocumento', upload_file_controllers_1.expedienteController.obtenerDocumento); // Nueva ruta
+        this.router.get('/:idExpediente', upload_file_controllers_1.expedienteController.obtenerExpediente);
+        this.router.delete('/:idExpediente', upload_file_controllers_1.expedienteController.eliminarExpediente);
+        this.router.put('/:idExpediente', upload_file_controllers_1.expedienteController.actualizarExpediente);
     }
 }
 const expedienteRoutes = new ExpedienteRoutes();

@@ -1,6 +1,7 @@
 import sql from 'mssql';
 import dotenv from 'dotenv';
 
+
 dotenv.config();
 
 const server = process.env.DB_SERVER || 'localhost';

@@ -15,10 +15,8 @@ import registerRoutes from './routes/register-routes';
 import expedienteRoutes from './routes/upload-file-routes';
 import pagoRoutes from './routes/gestionPago-route';
 
-
-
 class Server {
-    public app: Application; 
+    public app: Application;
 
     constructor() {
         this.app = express();
@@ -29,12 +27,12 @@ class Server {
 
     config(): void {
         this.app.set('port', process.env.PORT || 3000);
-        this.app.use(express.json());
-        this.app.use(express.urlencoded({ extended: false }));
+        this.app.use(express.json({ limit: '50mb' }));
+        this.app.use(express.urlencoded({ limit: '50mb', extended: true }));
         this.app.use(morgan('dev'));
         this.app.use(cors());
     }
-
+    
     async connectToDatabase(): Promise<void> {
         try {
             await connectDB();
@@ -53,16 +51,14 @@ class Server {
         this.app.use('/empleados', empleadoRoutes);
         this.app.use('/register', registerRoutes);
         this.app.use('/login', loginRoutes);
-        this.app.use('/roles', rolRoutes);
-        this.app.use('/empleados', empleadoRoutes);
-        this.app.use('/roles', rolRoutes);
-        this.app.use('/empleados', empleadoRoutes);
         this.app.use('/clientes', clienteRoutes); 
         this.app.use('/citas', citaRoutes); 
         this.app.use('/usuarios', usuarioRoutes);
         this.app.use('/servicios', servicioRoutes);
         this.app.use('/especialidades', especialidadRoutes);
         this.app.use('/agendas', agendaRoutes);
+        this.app.use('/pagos', pagoRoutes);
+        this.app.use('/expedientes', expedienteRoutes);
     }
 
     start(): void {
