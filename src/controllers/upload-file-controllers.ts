@@ -113,33 +113,35 @@ class ExpedienteController {
         }
     }
 
-    async obtenerExpedientes(req: Request, res: Response): Promise<void> {
-        try {
-            const { nombreExpediente, numeroExpediente, añoExpediente } = req.query;
-    
-            const pool = await connectDB();
+    obtenerExpedientes(req: Request, res: Response): void {
+    connectDB()
+        .then(pool => {
             const query = `
-                SELECT * FROM tblExpediente
-                WHERE 
-                    (@nombreExpediente IS NOT NULL AND nombreExpediente LIKE '%' + @nombreExpediente + '%')
-                    OR (@numeroExpediente IS NOT NULL AND numeroExpediente = @numeroExpediente)
-                    OR (@añoExpediente IS NOT NULL AND YEAR(fechaExpediente) = @añoExpediente)
+                SELECT 
+                    e.idExpediente,
+                    e.numeroExpediente,
+                    e.fechaCreacion,
+                    e.estado,
+                    e.descripcion,
+                    e.nombreExpediente,
+                    d.documentoBase64
+                FROM 
+                    tblExpediente e
+                LEFT JOIN 
+                    tblDocumentosExpediente d ON e.idExpediente = d.idExpedienteFK;
             `;
-    
-            const result = await pool.request()
-                .input('nombreExpediente', nombreExpediente || null)
-                .input('numeroExpediente', numeroExpediente || null)
-                .input('añoExpediente', añoExpediente || null)
-                .query(query);
-    
+            return pool.request().query(query);
+        })
+        .then(result => {
+            // Aquí devolvemos todos los expedientes con el nombre del cliente y los documentos
             res.status(200).json(result.recordset);
-        } catch (error) {
+        })
+        .catch(error => {
             console.error('Error al obtener los expedientes:', error);
             res.status(500).json({ error: 'Error al obtener los expedientes' });
-        }
-    }
-    
-    
+        });
+}
+
 
     async crearExpediente(req: Request, res: Response): Promise<void> {
         try {

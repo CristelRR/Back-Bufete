@@ -150,28 +150,31 @@ class ExpedienteController {
         });
     }
     obtenerExpedientes(req, res) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const { nombreExpediente, numeroExpediente, añoExpediente } = req.query;
-                const pool = yield (0, db_1.connectDB)();
-                const query = `
-                SELECT * FROM tblExpediente
-                WHERE 
-                    (@nombreExpediente IS NOT NULL AND nombreExpediente LIKE '%' + @nombreExpediente + '%')
-                    OR (@numeroExpediente IS NOT NULL AND numeroExpediente = @numeroExpediente)
-                    OR (@añoExpediente IS NOT NULL AND YEAR(fechaExpediente) = @añoExpediente)
+        (0, db_1.connectDB)()
+            .then(pool => {
+            const query = `
+                SELECT 
+                    e.idExpediente,
+                    e.numeroExpediente,
+                    e.fechaCreacion,
+                    e.estado,
+                    e.descripcion,
+                    e.nombreExpediente,
+                    d.documentoBase64
+                FROM 
+                    tblExpediente e
+                LEFT JOIN 
+                    tblDocumentosExpediente d ON e.idExpediente = d.idExpedienteFK;
             `;
-                const result = yield pool.request()
-                    .input('nombreExpediente', nombreExpediente || null)
-                    .input('numeroExpediente', numeroExpediente || null)
-                    .input('añoExpediente', añoExpediente || null)
-                    .query(query);
-                res.status(200).json(result.recordset);
-            }
-            catch (error) {
-                console.error('Error al obtener los expedientes:', error);
-                res.status(500).json({ error: 'Error al obtener los expedientes' });
-            }
+            return pool.request().query(query);
+        })
+            .then(result => {
+            // Aquí devolvemos todos los expedientes con el nombre del cliente y los documentos
+            res.status(200).json(result.recordset);
+        })
+            .catch(error => {
+            console.error('Error al obtener los expedientes:', error);
+            res.status(500).json({ error: 'Error al obtener los expedientes' });
         });
     }
     crearExpediente(req, res) {
