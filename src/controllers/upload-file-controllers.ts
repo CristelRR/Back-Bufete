@@ -10,6 +10,71 @@ if (!fs.existsSync(uploadDir)) {
 
 class ExpedienteController {
 
+    async obtenerExpedienteCompleto(req: Request, res: Response): Promise<void> {
+        try {
+            const { idExpediente, year, numeroExpediente, nombreCliente } = req.query;
+    
+            const pool = await connectDB();
+    
+            // Consulta SQL para el expediente con condiciones variables
+            let expedienteQuery = `SELECT e.*, c.nombre AS nombreCliente
+                                   FROM tblExpediente e
+                                   LEFT JOIN tblCliente c ON e.idClienteFK = c.idCliente
+                                   WHERE 1 = 1`; // Iniciamos con una condición siempre verdadera
+    
+            // Agregamos condiciones en función de los parámetros recibidos
+            if (idExpediente) {
+                expedienteQuery += ` AND e.idExpediente = @idExpediente`;
+            }
+            if (year) {
+                expedienteQuery += ` AND YEAR(e.fechaCreacion) = @year`;
+            }
+            if (numeroExpediente) {
+                expedienteQuery += ` AND e.numeroExpediente = @numeroExpediente`;
+            }
+            if (nombreCliente) {
+                expedienteQuery += ` AND c.nombre LIKE '%' + @nombreCliente + '%'`;
+            }
+    
+            // Preparar la consulta y añadir parámetros de manera dinámica
+            const expedienteRequest = pool.request();
+            if (idExpediente) expedienteRequest.input('idExpediente', idExpediente);
+            if (year) expedienteRequest.input('year', year);
+            if (numeroExpediente) expedienteRequest.input('numeroExpediente', numeroExpediente);
+            if (nombreCliente) expedienteRequest.input('nombreCliente', nombreCliente);
+    
+            const expedienteResult = await expedienteRequest.query(expedienteQuery);
+    
+            if (expedienteResult.recordset.length === 0) {
+                res.status(404).json({ error: 'Expediente no encontrado' });
+                return;
+            }
+    
+            const expediente = expedienteResult.recordset[0];
+    
+            // Consulta para los documentos relacionados con el expediente
+            const documentosResult = await pool.request()
+                .input('idExpediente', expediente.idExpediente)
+                .query(`
+                    SELECT d.idDocumento, d.documentoBase64, t.tipoDocumento
+                    FROM tblDocumentosExpediente d
+                    LEFT JOIN tblTipoDocumento t ON d.idTipoDocumentoFK = t.idTipoDocumento
+                    WHERE d.idExpedienteFK = @idExpediente;
+                `);
+    
+            // Respuesta con los datos del expediente y sus documentos
+            res.status(200).json({
+                expediente,
+                documentos: documentosResult.recordset
+            });
+        } catch (error) {
+            console.error('Error al obtener el expediente completo:', error);
+            res.status(500).json({ error: 'Error al obtener el expediente' });
+        }
+    }
+    
+    
+
     async obtenerDocumento(req: Request, res: Response): Promise<void> {
         try {
             const { idDocumento } = req.params;
@@ -50,14 +115,31 @@ class ExpedienteController {
 
     async obtenerExpedientes(req: Request, res: Response): Promise<void> {
         try {
+            const { nombreExpediente, numeroExpediente, añoExpediente } = req.query;
+    
             const pool = await connectDB();
-            const result = await pool.request().query("SELECT * FROM tblExpediente");
+            const query = `
+                SELECT * FROM tblExpediente
+                WHERE 
+                    (@nombreExpediente IS NOT NULL AND nombreExpediente LIKE '%' + @nombreExpediente + '%')
+                    OR (@numeroExpediente IS NOT NULL AND numeroExpediente = @numeroExpediente)
+                    OR (@añoExpediente IS NOT NULL AND YEAR(fechaExpediente) = @añoExpediente)
+            `;
+    
+            const result = await pool.request()
+                .input('nombreExpediente', nombreExpediente || null)
+                .input('numeroExpediente', numeroExpediente || null)
+                .input('añoExpediente', añoExpediente || null)
+                .query(query);
+    
             res.status(200).json(result.recordset);
         } catch (error) {
             console.error('Error al obtener los expedientes:', error);
             res.status(500).json({ error: 'Error al obtener los expedientes' });
         }
     }
+    
+    
 
     async crearExpediente(req: Request, res: Response): Promise<void> {
         try {
