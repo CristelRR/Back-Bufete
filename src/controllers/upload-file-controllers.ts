@@ -114,110 +114,179 @@ class ExpedienteController {
     }
 
     obtenerExpedientes(req: Request, res: Response): void {
-    connectDB()
-        .then(pool => {
-            const query = `
-                SELECT 
-                    e.idExpediente,
-                    e.numeroExpediente,
-                    e.fechaCreacion,
-                    e.estado,
-                    e.descripcion,
-                    e.nombreExpediente,
-                    d.documentoBase64
-                FROM 
-                    tblExpediente e
-                LEFT JOIN 
-                    tblDocumentosExpediente d ON e.idExpediente = d.idExpedienteFK;
-            `;
-            return pool.request().query(query);
-        })
-        .then(result => {
-            // Aquí devolvemos todos los expedientes con el nombre del cliente y los documentos
-            res.status(200).json(result.recordset);
-        })
-        .catch(error => {
-            console.error('Error al obtener los expedientes:', error);
-            res.status(500).json({ error: 'Error al obtener los expedientes' });
-        });
-}
+        connectDB()
+            .then(pool => {
+                const query = `
+                    SELECT 
+                        e.idExpediente,
+                        e.numeroExpediente,
+                        e.fechaCreacion,
+                        e.estado,
+                        e.descripcion,
+                        e.nombreExpediente,
+                        d.documentoBase64,
+                        d.fechaSubida,
+                        d.estado AS estadoDocumento,
+                        d.idTipoDocumentoFK,
+                        td.tipoDocumento
+                    FROM 
+                        tblExpediente e
+                    LEFT JOIN 
+                        tblDocumentosExpediente d ON e.idExpediente = d.idExpedienteFK
+                    LEFT JOIN
+                        tblTipoDocumento td ON d.idTipoDocumentoFK = td.idTipoDocumento;
+                `;
+                return pool.request().query(query);
+            })
+            .then(result => {
+                // Agrupamos los documentos por expediente
+                const expedientesMap = new Map();
+    
+                result.recordset.forEach((row: any) => {
+                    const expedienteId = row.idExpediente;
+    
+                    // Verificamos si el expediente ya existe en el mapa
+                    if (!expedientesMap.has(expedienteId)) {
+                        expedientesMap.set(expedienteId, {
+                            idExpediente: row.idExpediente,
+                            numeroExpediente: row.numeroExpediente,
+                            fechaCreacion: row.fechaCreacion,
+                            estado: row.estado,
+                            descripcion: row.descripcion,
+                            nombreExpediente: row.nombreExpediente,
+                            documentos: []
+                        });
+                    }
+    
+                    // Agregamos el documento si existe en el registro
+                    if (row.documentoBase64) {
+                        expedientesMap.get(expedienteId).documentos.push({
+                            documentoBase64: row.documentoBase64,
+                            fechaSubida: row.fechaSubida,
+                            estadoDocumento: row.estadoDocumento,
+                            tipoDocumento: row.tipoDocumento
+                        });
+                    }
+                });
+    
+                // Convertimos el mapa en un arreglo de expedientes
+                const expedientes = Array.from(expedientesMap.values());
+    
+                res.status(200).json(expedientes);
+            })
+            .catch(error => {
+                console.error('Error al obtener los expedientes:', error);
+                res.status(500).json({ error: 'Error al obtener los expedientes' });
+            });
+    }
 
+    async insertarDocumentos(transaction: any, idExpediente: number, documentos: any[]): Promise<string[]> {
+        const errors: string[] = [];
+    
+        for (const doc of documentos) {
+            const { documentoBase64, idTipoDocumentoFK } = doc;
+    
+            // Validaciones del documento
+            if (!documentoBase64 || !idTipoDocumentoFK) {
+                errors.push('El archivo o el tipo de documento no son válidos.');
+                continue;
+            }
+    
+            // Validación del tipo de documento
+            const validTiposDocumento = ['CURP', 'CV', 'Comprobante de Domicilio', 'NSS', 'Identificación Oficial'];
+            const tipoDocumento = await transaction.request()
+                .input('idTipoDocumentoFK', idTipoDocumentoFK)
+                .query('SELECT tipoDocumento FROM tblTipoDocumento WHERE idTipoDocumento = @idTipoDocumentoFK');
+    
+            if (tipoDocumento.recordset.length === 0) {
+                errors.push(`El tipo de documento con ID ${idTipoDocumentoFK} no existe.`);
+                continue;
+            }
+    
+            const tipoDocumentoNombre = tipoDocumento.recordset[0].tipoDocumento;
+            if (!validTiposDocumento.includes(tipoDocumentoNombre)) {
+                errors.push(`El tipo de documento '${tipoDocumentoNombre}' no es válido para este expediente.`);
+                continue;
+            }
+    
+            // Validación de Base64
+            const base64Pattern = /^[A-Za-z0-9+/=]*$/;
+            if (!base64Pattern.test(documentoBase64)) {
+                errors.push('El archivo proporcionado no es un Base64 válido.');
+                continue;
+            }
+    
+            // Si pasa todas las validaciones, insertar el documento en la base de datos
+            try {
+                await transaction.request()
+                    .input('idExpediente', idExpediente)
+                    .input('documentoBase64', documentoBase64)
+                    .input('idTipoDocumentoFK', idTipoDocumentoFK)
+                    .query(`
+                        INSERT INTO tblDocumentosExpediente 
+                        (idExpediente, documentoBase64, idTipoDocumentoFK, fechaSubida, estado)
+                        VALUES (@idExpediente, @documentoBase64, @idTipoDocumentoFK, GETDATE(), 'Pendiente');
+                    `);
+            } catch (error) {
+                console.error('Error al insertar documento:', error);
+                errors.push('Hubo un error al insertar los documentos.');
+            }
+        }
+    
+        // Devolver errores si existen
+        return errors.length > 0 ? errors : [];
+    }
+    
 
-    async crearExpediente(req: Request, res: Response): Promise<void> {
+    
+
+    // Método para crear expediente
+    async crearExpediente(req: Request, res: Response) {
         try {
-            const { numeroExpediente, estado, descripcion, nombreExpediente, idClienteFK, idEmpleadoFK, documentos } = req.body;
+            const { numeroExpediente, estado, descripcion, nombreExpediente, idClienteFK, idEmpleadoFK } = req.body;
     
             if (!numeroExpediente || !estado || !idClienteFK) {
-                res.status(400).json({ error: 'Faltan datos necesarios para crear el expediente' });
-                return;
+                return res.status(400).json({ error: 'Faltan campos obligatorios' });
             }
     
             const pool = await connectDB();
-            const result = await pool.request()
-                .input('numeroExpediente', numeroExpediente)
-                .input('estado', estado)
-                .input('descripcion', descripcion || '')
-                .input('nombreExpediente', nombreExpediente || 'Nombre por Defecto')
-                .input('idClienteFK', idClienteFK)
-                .input('idEmpleadoFK', idEmpleadoFK || null)
-                .query(`
-                    INSERT INTO tblExpediente (numeroExpediente, estado, descripcion, nombreExpediente, idClienteFK, idEmpleadoFK)
-                    VALUES (@numeroExpediente, @estado, @descripcion, @nombreExpediente, @idClienteFK, @idEmpleadoFK);
-                    SELECT SCOPE_IDENTITY() AS idExpediente;
-                `);
+            const transaction = pool.transaction();
+            await transaction.begin();
     
-            const idExpediente: number = Number(result.recordset[0].idExpediente);
-    
-            // Asegurarse de que los documentos se procesen correctamente
-            if (documentos && documentos.length > 0) {
-                const documentInsertErrors = await this.insertarDocumentos(pool, idExpediente, documentos);
-                
-                if (documentInsertErrors.length > 0) {
-                    // Si hay errores al insertar los documentos, devuelve el error
-                    res.status(400).json({ errors: documentInsertErrors });
-                    return;
-                }
-            }
-    
-            res.status(201).json({ message: 'Expediente y documentos creados correctamente' });
-        } catch (error) {
-            console.error('Error al crear el expediente:', error);
-            res.status(500).json({ error: 'Error al crear el expediente' });
-        }
-    }
-
-    private insertarDocumentos = async (pool: any, idExpediente: number, documentos: any[]): Promise<string[]> => {
-        const errors: string[] = [];
-        for (const doc of documentos) {
-            const { archivoBase64, tipoDocumento } = doc;
-            if (!archivoBase64 || !tipoDocumento) {
-                errors.push('Faltan datos necesarios para los documentos');
-                continue;
-            }
-
-            const base64Regex = /^data:([A-Za-z-+/]+)?;base64,/;
-            if (!base64Regex.test(archivoBase64)) {
-                errors.push('El archivo no está en formato Base64');
-                continue;
-            }
-
-            const fileBuffer = Buffer.from(archivoBase64.replace(base64Regex, ''), 'base64');
             try {
-                await pool.request()
-                    .input('tipoDocumento', tipoDocumento)
-                    .input('documentoBase64', fileBuffer)
-                    .input('idExpedienteFK', idExpediente)
+                // Crear el expediente
+                const result = await transaction.request()
+                    .input('numeroExpediente', numeroExpediente)
+                    .input('estado', estado)
+                    .input('descripcion', descripcion || '')
+                    .input('nombreExpediente', nombreExpediente || 'Nombre por Defecto')
+                    .input('idClienteFK', idClienteFK)
+                    .input('idEmpleadoFK', idEmpleadoFK || null)
                     .query(`
-                        INSERT INTO tblDocumentosExpediente (idExpedienteFK, idTipoDocumentoFK, documentoBase64)
-                        VALUES (@idExpedienteFK, (SELECT idTipoDocumento FROM tblTipoDocumento WHERE tipoDocumento = @tipoDocumento), @documentoBase64);
+                        INSERT INTO tblExpediente (numeroExpediente, estado, descripcion, nombreExpediente, idClienteFK, idEmpleadoFK)
+                        VALUES (@numeroExpediente, @estado, @descripcion, @nombreExpediente, @idClienteFK, @idEmpleadoFK);
+                        SELECT SCOPE_IDENTITY() AS idExpediente;
                     `);
+    
+                // Obtener el idExpediente recién creado
+                const idExpediente = Number(result.recordset[0].idExpediente);
+    
+                await transaction.commit();
+                return res.status(200).json({ message: 'Expediente creado correctamente', idExpediente });
+    
             } catch (error) {
-                console.error(`Error al insertar documento ${tipoDocumento}:`, error);
-                errors.push(`Error al insertar documento de tipo ${tipoDocumento}`);
+                console.error('Error al insertar expediente:', error);
+                await transaction.rollback();
+                return res.status(500).json({ error: 'Error al insertar el expediente' });
             }
+        } catch (error) {
+            console.error('Error al conectar a la base de datos:', error);
+            return res.status(500).json({ error: 'Error al conectar a la base de datos' });
         }
-        return errors;
     }
+    
+    
+    
 
     async obtenerExpediente(req: Request, res: Response): Promise<void> {
         try {
