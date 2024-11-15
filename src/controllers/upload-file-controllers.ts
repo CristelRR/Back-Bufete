@@ -186,14 +186,13 @@ class ExpedienteController {
         for (const doc of documentos) {
             const { documentoBase64, idTipoDocumentoFK } = doc;
     
-            // Validaciones del documento
+            // Validación de datos
             if (!documentoBase64 || !idTipoDocumentoFK) {
                 errors.push('El archivo o el tipo de documento no son válidos.');
                 continue;
             }
     
-            // Validación del tipo de documento
-            const validTiposDocumento = ['CURP', 'CV', 'Comprobante de Domicilio', 'NSS', 'Identificación Oficial'];
+            // Validación del tipo de documento en la base de datos
             const tipoDocumento = await transaction.request()
                 .input('idTipoDocumentoFK', idTipoDocumentoFK)
                 .query('SELECT tipoDocumento FROM tblTipoDocumento WHERE idTipoDocumento = @idTipoDocumentoFK');
@@ -204,19 +203,20 @@ class ExpedienteController {
             }
     
             const tipoDocumentoNombre = tipoDocumento.recordset[0].tipoDocumento;
+            const validTiposDocumento = ['CURP', 'Curriculum Vitae', 'Comprobante de Domicilio', 'Número de Seguridad Social (IMSS)', 'Identificación Oficial'];
             if (!validTiposDocumento.includes(tipoDocumentoNombre)) {
                 errors.push(`El tipo de documento '${tipoDocumentoNombre}' no es válido para este expediente.`);
                 continue;
             }
     
-            // Validación de Base64
+            // Validación de formato Base64
             const base64Pattern = /^[A-Za-z0-9+/=]*$/;
             if (!base64Pattern.test(documentoBase64)) {
                 errors.push('El archivo proporcionado no es un Base64 válido.');
                 continue;
             }
     
-            // Si pasa todas las validaciones, insertar el documento en la base de datos
+            // Inserción del documento
             try {
                 await transaction.request()
                     .input('idExpediente', idExpediente)
@@ -229,11 +229,10 @@ class ExpedienteController {
                     `);
             } catch (error) {
                 console.error('Error al insertar documento:', error);
-                errors.push('Hubo un error al insertar los documentos.');
+                errors.push('Hubo un error al insertar el documento.');
             }
         }
     
-        // Devolver errores si existen
         return errors.length > 0 ? errors : [];
     }
     
@@ -323,24 +322,192 @@ class ExpedienteController {
     async eliminarExpediente(req: Request, res: Response): Promise<void> {
         try {
             const { idExpediente } = req.params;
-
+            const responsableEliminacion = req.user?.nombre || 'Usuario desconocido'; // Ejemplo: Obtener el nombre del usuario actual
+    
             if (!idExpediente) {
                 res.status(400).json({ error: 'Falta el ID del expediente' });
-                return
+                return;
             }
-
+    
             const pool = await connectDB();
-            await pool.request().input('idExpediente', idExpediente).query(`
-                DELETE FROM tblDocumentosExpediente WHERE idExpedienteFK = @idExpediente;
-                DELETE FROM tblExpediente WHERE idExpediente = @idExpediente;
-            `);
-
-            res.status(200).json({ message: 'Expediente y documentos eliminados correctamente' });
+    
+            // Iniciar una transacción
+            const transaction = pool.transaction();
+            await transaction.begin();
+    
+            try {
+                // Obtener los datos del expediente
+                const expedienteResult = await transaction.request()
+                    .input('idExpediente', idExpediente)
+                    .query(`
+                        SELECT * FROM tblExpediente WHERE idExpediente = @idExpediente
+                    `);
+    
+                if (expedienteResult.recordset.length === 0) {
+                    res.status(404).json({ error: 'Expediente no encontrado' });
+                    return;
+                }
+    
+                const expediente = expedienteResult.recordset[0];
+    
+                // Insertar en tblHistorialExpediente
+                const historialExpedienteResult = await transaction.request()
+                    .input('idExpedienteOriginal', expediente.idExpediente)
+                    .input('numeroExpediente', expediente.numeroExpediente)
+                    .input('nombreExpediente', expediente.nombreExpediente)
+                    .input('descripcion', expediente.descripcion)
+                    .input('estado', expediente.estado)
+                    .input('fechaCreacion', expediente.fechaCreacion)
+                    .input('responsableEliminacion', responsableEliminacion)
+                    .input('idClienteFK', expediente.idClienteFK)
+                    .input('idEmpleadoFK', expediente.idEmpleadoFK)
+                    .query(`
+                        INSERT INTO tblHistorialExpediente (
+                            idExpedienteOriginal, numeroExpediente, nombreExpediente,
+                            descripcion, estado, fechaCreacion, responsableEliminacion,
+                            idClienteFK, idEmpleadoFK
+                        ) OUTPUT INSERTED.idHistorialExpediente
+                        VALUES (
+                            @idExpedienteOriginal, @numeroExpediente, @nombreExpediente,
+                            @descripcion, @estado, @fechaCreacion, @responsableEliminacion,
+                            @idClienteFK, @idEmpleadoFK
+                        )
+                    `);
+    
+                const idHistorialExpediente = historialExpedienteResult.recordset[0].idHistorialExpediente;
+    
+                // Obtener los documentos del expediente
+                const documentosResult = await transaction.request()
+                    .input('idExpediente', idExpediente)
+                    .query(`
+                        SELECT * FROM tblDocumentosExpediente WHERE idExpedienteFK = @idExpediente
+                    `);
+    
+                const documentos = documentosResult.recordset;
+    
+                // Insertar los documentos en tblHistorialDocumentosExpediente
+                for (const documento of documentos) {
+                    await transaction.request()
+                        .input('idExpedienteHistorialFK', idHistorialExpediente)
+                        .input('idTipoDocumentoFK', documento.idTipoDocumentoFK)
+                        .input('fechaSubida', documento.fechaSubida)
+                        .input('estado', documento.estado)
+                        .input('documentoBase64', documento.documentoBase64)
+                        .query(`
+                            INSERT INTO tblHistorialDocumentosExpediente (
+                                idExpedienteHistorialFK, idTipoDocumentoFK, fechaSubida,
+                                estado, documentoBase64
+                            ) VALUES (
+                                @idExpedienteHistorialFK, @idTipoDocumentoFK, @fechaSubida,
+                                @estado, @documentoBase64
+                            )
+                        `);
+                }
+    
+                // Eliminar los documentos del expediente original
+                await transaction.request()
+                    .input('idExpediente', idExpediente)
+                    .query(`
+                        DELETE FROM tblDocumentosExpediente WHERE idExpedienteFK = @idExpediente;
+                    `);
+    
+                // Eliminar el expediente original
+                await transaction.request()
+                    .input('idExpediente', idExpediente)
+                    .query(`
+                        DELETE FROM tblExpediente WHERE idExpediente = @idExpediente;
+                    `);
+    
+                // Confirmar la transacción
+                await transaction.commit();
+    
+                res.status(200).json({ message: 'Expediente y documentos movidos al historial correctamente' });
+            } catch (innerError) {
+                await transaction.rollback();
+                console.error('Error durante la transacción:', innerError);
+                res.status(500).json({ error: 'Error al mover el expediente al historial' });
+            }
         } catch (error) {
             console.error('Error al eliminar el expediente:', error);
             res.status(500).json({ error: 'Error al eliminar el expediente' });
         }
     }
+    async obtenerHistorialExpedientes(req: Request, res: Response): Promise<void> {
+        connectDB()
+            .then(pool => {
+                const query = `
+                    SELECT 
+                        he.idExpedienteOriginal,
+                        he.fechaEliminacion,
+                        he.responsableEliminacion,
+                        he.numeroExpediente,
+                        he.fechaCreacion,
+                        he.estado AS estadoExpediente,
+                        he.descripcion,
+                        he.nombreExpediente,
+                        hd.documentoBase64,
+                        hd.fechaSubida,
+                        hd.estado AS estadoDocumento,
+                        hd.idTipoDocumentoFK,
+                        td.tipoDocumento
+                    FROM 
+                        tblHistorialExpediente he
+                    LEFT JOIN 
+                        tblHistorialDocumentosExpediente hd 
+                        ON he.idHistorialExpediente = hd.idExpedienteHistorialFK
+                    LEFT JOIN
+                        tblTipoDocumento td 
+                        ON hd.idTipoDocumentoFK = td.idTipoDocumento;
+                `;
+                return pool.request().query(query);
+            })
+            .then(result => {
+                // Agrupamos los documentos por expediente
+                const expedientesMap = new Map();
+    
+                result.recordset.forEach((row: any) => {
+                    const expedienteId = row.idExpedienteOriginal; // Cambiado a `idExpedienteOriginal` para que coincida con la consulta
+    
+                    // Verificamos si el expediente ya existe en el mapa
+                    if (!expedientesMap.has(expedienteId)) {
+                        expedientesMap.set(expedienteId, {
+                            idExpedienteOriginal: expedienteId,
+                            numeroExpediente: row.numeroExpediente,
+                            fechaCreacion: row.fechaCreacion,
+                            estadoExpediente: row.estadoExpediente,
+                            descripcion: row.descripcion,
+                            fechaEliminacion: row.fechaEliminacion,
+                            responsableEliminacion: row.responsableEliminacion,
+                            nombreExpediente: row.nombreExpediente,
+                            documentos: []
+                        });
+                    }
+    
+                    // Agregamos el documento si existe en el registro
+                    if (row.documentoBase64) {
+                        expedientesMap.get(expedienteId).documentos.push({
+                            documentoBase64: row.documentoBase64,
+                            fechaSubida: row.fechaSubida,
+                            estadoDocumento: row.estadoDocumento,
+                            idTipoDocumentoFK: row.idTipoDocumentoFK,
+                            tipoDocumento: row.tipoDocumento
+                        });
+                    }
+                });
+    
+                // Convertimos el mapa en un arreglo de expedientes
+                const expedientes = Array.from(expedientesMap.values());
+    
+                res.status(200).json(expedientes);
+            })
+            .catch(error => {
+                console.error('Error al obtener el historial de los expedientes:', error);
+                res.status(500).json({ error: 'Error al obtener el historial de los expedientes' });
+            });
+    }
+    
+    
+    
 
     async actualizarExpediente(req: Request, res: Response): Promise<void> {
         try {

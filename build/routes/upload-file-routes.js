@@ -14,8 +14,9 @@ class ExpedienteRoutes {
     }
     config() {
         this.router.post('/', upload_file_controllers_1.expedienteController.crearExpediente);
+        this.router.get('/historial-expedientes', upload_file_controllers_1.expedienteController.obtenerHistorialExpedientes);
         this.router.get('/', upload_file_controllers_1.expedienteController.obtenerExpedientes);
-        this.router.get('/documento/:idDocumento', upload_file_controllers_1.expedienteController.obtenerDocumento); // Nueva ruta
+        this.router.get('/documento/:idDocumento', upload_file_controllers_1.expedienteController.obtenerDocumento);
         this.router.get('/:idExpediente', upload_file_controllers_1.expedienteController.obtenerExpediente);
         this.router.delete('/:idExpediente', upload_file_controllers_1.expedienteController.eliminarExpediente);
         this.router.put('/:idExpediente', upload_file_controllers_1.expedienteController.actualizarExpediente);
