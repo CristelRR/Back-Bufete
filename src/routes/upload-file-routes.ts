@@ -12,6 +12,7 @@ class ExpedienteRoutes {
 
     config(): void {
         this.router.post('/', expedienteController.crearExpediente);
+        this.router.post('/subirDocumento', expedienteController.insertarDocumentos);
         this.router.get('/historial-expedientes', expedienteController.obtenerHistorialExpedientes);
         this.router.get('/', expedienteController.obtenerExpedientes);
         this.router.get('/documento/:idDocumento', expedienteController.obtenerDocumento);

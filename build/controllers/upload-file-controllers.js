@@ -177,54 +177,43 @@ class ExpedienteController {
             res.status(500).json({ error: 'Error al obtener los expedientes' });
         });
     }
-    insertarDocumentos(transaction, idExpediente, documentos) {
+    insertarDocumentos(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            const errors = [];
-            for (const doc of documentos) {
-                const { documentoBase64, idTipoDocumentoFK } = doc;
-                // Validación de datos
-                if (!documentoBase64 || !idTipoDocumentoFK) {
-                    errors.push('El archivo o el tipo de documento no son válidos.');
-                    continue;
+            try {
+                const expedienteId = req.body.idExpedienteFK;
+                const tipoDocumento = req.body.idTipoDocumentoFK;
+                const documentos = req.files; // Array de archivos
+                if (!expedienteId || !tipoDocumento || documentos.length === 0) {
+                    return res.status(400).json({ error: 'Expediente ID, tipo de documento y archivos son requeridos' });
                 }
-                // Validación del tipo de documento en la base de datos
-                const tipoDocumento = yield transaction.request()
-                    .input('idTipoDocumentoFK', idTipoDocumentoFK)
-                    .query('SELECT tipoDocumento FROM tblTipoDocumento WHERE idTipoDocumento = @idTipoDocumentoFK');
-                if (tipoDocumento.recordset.length === 0) {
-                    errors.push(`El tipo de documento con ID ${idTipoDocumentoFK} no existe.`);
-                    continue;
+                const errores = [];
+                for (const documento of documentos) {
+                    const { path: filePath, mimetype, size } = documento;
+                    // Validaciones
+                    if (size > 10 * 1024 * 1024) { // Limitar tamaño de archivo a 10MB
+                        errores.push(`El archivo ${documento.originalname} es demasiado grande.`);
+                        continue;
+                    }
+                    if (!['application/pdf'].includes(mimetype)) {
+                        errores.push(`El archivo ${documento.originalname} no es un PDF válido.`);
+                        continue;
+                    }
+                    // Lee el archivo como Base64
+                    const documentoBase64 = fs_1.default.readFileSync(filePath, { encoding: 'base64' });
+                    // Inserción en la base de datos
+                    yield expedienteService.insertarDocumento(expedienteId, documentoBase64, documento.originalname);
+                    // Elimina el archivo después de cargarlo
+                    fs_1.default.unlinkSync(filePath);
                 }
-                const tipoDocumentoNombre = tipoDocumento.recordset[0].tipoDocumento;
-                const validTiposDocumento = ['CURP', 'Curriculum Vitae', 'Comprobante de Domicilio', 'Número de Seguridad Social (IMSS)', 'Identificación Oficial'];
-                if (!validTiposDocumento.includes(tipoDocumentoNombre)) {
-                    errors.push(`El tipo de documento '${tipoDocumentoNombre}' no es válido para este expediente.`);
-                    continue;
+                if (errores.length > 0) {
+                    return res.status(400).json({ errors: errores });
                 }
-                // Validación de formato Base64
-                const base64Pattern = /^[A-Za-z0-9+/=]*$/;
-                if (!base64Pattern.test(documentoBase64)) {
-                    errors.push('El archivo proporcionado no es un Base64 válido.');
-                    continue;
-                }
-                // Inserción del documento
-                try {
-                    yield transaction.request()
-                        .input('idExpediente', idExpediente)
-                        .input('documentoBase64', documentoBase64)
-                        .input('idTipoDocumentoFK', idTipoDocumentoFK)
-                        .query(`
-                        INSERT INTO tblDocumentosExpediente 
-                        (idExpediente, documentoBase64, idTipoDocumentoFK, fechaSubida, estado)
-                        VALUES (@idExpediente, @documentoBase64, @idTipoDocumentoFK, GETDATE(), 'Pendiente');
-                    `);
-                }
-                catch (error) {
-                    console.error('Error al insertar documento:', error);
-                    errors.push('Hubo un error al insertar el documento.');
-                }
+                res.status(200).json({ message: 'Documentos subidos exitosamente.' });
             }
-            return errors.length > 0 ? errors : [];
+            catch (error) {
+                console.error('Error al subir documentos:', error);
+                res.status(500).json({ error: 'Hubo un error al procesar los documentos.' });
+            }
         });
     }
     // Método para crear expediente
