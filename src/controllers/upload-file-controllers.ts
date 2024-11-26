@@ -3,6 +3,7 @@ import { connectDB } from "../config/db";
 import fs from "fs";
 import path from "path";
 
+
 const uploadDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
@@ -27,7 +28,7 @@ class ExpedienteController {
                 expedienteQuery += ` AND e.idExpediente = @idExpediente`;
             }
             if (year) {
-                expedienteQuery += ` AND YEAR(e.fechaCreacion) = @year`;
+                expedienteQuery += ` AND YEAR(e.anioExpediente) = @year`;
             }
             if (numeroExpediente) {
                 expedienteQuery += ` AND e.numeroExpediente = @numeroExpediente`;
@@ -72,8 +73,6 @@ class ExpedienteController {
             res.status(500).json({ error: 'Error al obtener el expediente' });
         }
     }
-    
-    
 
     async obtenerDocumento(req: Request, res: Response): Promise<void> {
         try {
@@ -183,49 +182,47 @@ class ExpedienteController {
     async insertarDocumentos(req: Request, res: Response) {
         try {
             const expedienteId = req.body.idExpedienteFK;
-            const tipoDocumento = req.body.idTipoDocumentoFK
-            const documentos = req.files as Express.Multer.File[];  // Array de archivos
-
-            if (!expedienteId || !tipoDocumento || documentos.length === 0) {
-                return res.status(400).json({ error: 'Expediente ID, tipo de documento y archivos son requeridos' });
+            const documentos = req.body.documentos; // Arreglo de documentos en JSON
+    
+            if (!expedienteId || !documentos || documentos.length === 0) {
+                return res.status(400).json({ error: 'ID de expediente y documentos son requeridos' });
             }
-
+    
+            const pool = await connectDB();
             const errores = [];
-
-            for (const documento of documentos) {
-                const { path: filePath, mimetype, size } = documento;
-
+    
+            for (const doc of documentos) {
+                const { documentoBase64, idTipoDocumentoFK } = doc;
+    
                 // Validaciones
-                if (size > 10 * 1024 * 1024) {  // Limitar tamaño de archivo a 10MB
-                    errores.push(`El archivo ${documento.originalname} es demasiado grande.`);
+                if (!documentoBase64 || !idTipoDocumentoFK) {
+                    errores.push('Cada documento debe incluir Base64 y un ID de tipo de documento.');
                     continue;
                 }
-
-                if (!['application/pdf'].includes(mimetype)) {
-                    errores.push(`El archivo ${documento.originalname} no es un PDF válido.`);
-                    continue;
-                }
-
-                // Lee el archivo como Base64
-                const documentoBase64 = fs.readFileSync(filePath, { encoding: 'base64' });
-
+    
                 // Inserción en la base de datos
-                await expedienteService.insertarDocumento(expedienteId, documentoBase64, documento.originalname);
-
-                // Elimina el archivo después de cargarlo
-                fs.unlinkSync(filePath);
+                await pool.request()
+                    .input('idExpedienteFK', expedienteId)
+                    .input('idTipoDocumentoFK', idTipoDocumentoFK)
+                    .input('documentoBase64', documentoBase64)
+                    .query(`
+                        INSERT INTO tblDocumentosExpediente (idExpedienteFK, idTipoDocumentoFK, documentoBase64, fechaSubida, estado)
+                        VALUES (@idExpedienteFK, @idTipoDocumentoFK, @documentoBase64, GETDATE(), 'Pendiente');
+                    `);
             }
-
+    
             if (errores.length > 0) {
                 return res.status(400).json({ errors: errores });
             }
-
+    
             res.status(200).json({ message: 'Documentos subidos exitosamente.' });
         } catch (error) {
             console.error('Error al subir documentos:', error);
             res.status(500).json({ error: 'Hubo un error al procesar los documentos.' });
         }
     }
+    
+    
     
     // Método para crear expediente
     async crearExpediente(req: Request, res: Response) {
@@ -271,9 +268,6 @@ class ExpedienteController {
             return res.status(500).json({ error: 'Error al conectar a la base de datos' });
         }
     }
-    
-    
-    
 
     async obtenerExpediente(req: Request, res: Response): Promise<void> {
         try {
@@ -420,6 +414,7 @@ class ExpedienteController {
             res.status(500).json({ error: 'Error al eliminar el expediente' });
         }
     }
+
     async obtenerHistorialExpedientes(req: Request, res: Response): Promise<void> {
         connectDB()
             .then(pool => {
@@ -493,10 +488,8 @@ class ExpedienteController {
                 res.status(500).json({ error: 'Error al obtener el historial de los expedientes' });
             });
     }
-    
-    
-    
 
+    
     async actualizarExpediente(req: Request, res: Response): Promise<void> {
         try {
             const { idExpediente } = req.params;
