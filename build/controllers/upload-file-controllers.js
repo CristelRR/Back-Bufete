@@ -219,10 +219,16 @@ class ExpedienteController {
     crearExpediente(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { numeroExpediente, estado, descripcion, nombreExpediente, idClienteFK, idEmpleadoFK } = req.body;
-                if (!numeroExpediente || !estado || !idClienteFK) {
+                const { numeroExpediente, estadoExpediente, nombreServicio, datosAbogado, datosCliente, fechaApertura, idClienteFK, idEmpleadoFK, } = req.body;
+                // Validación de campos obligatorios
+                if (!numeroExpediente || !estadoExpediente || !idClienteFK || !nombreServicio) {
                     return res.status(400).json({ error: 'Faltan campos obligatorios' });
                 }
+                // Validar la estructura de los datos de abogado y cliente
+                if (!datosAbogado || !datosCliente) {
+                    return res.status(400).json({ error: 'Faltan datos de abogado o cliente' });
+                }
+                // Conectar a la base de datos
                 const pool = yield (0, db_1.connectDB)();
                 const transaction = pool.transaction();
                 yield transaction.begin();
@@ -230,14 +236,34 @@ class ExpedienteController {
                     // Crear el expediente
                     const result = yield transaction.request()
                         .input('numeroExpediente', numeroExpediente)
-                        .input('estado', estado)
-                        .input('descripcion', descripcion || '')
-                        .input('nombreExpediente', nombreExpediente || 'Nombre por Defecto')
+                        .input('estadoExpediente', estadoExpediente)
+                        .input('nombreServicio', nombreServicio)
+                        .input('datosAbogado', JSON.stringify(datosAbogado)) // Convertir datosAbogado a JSON
+                        .input('datosCliente', JSON.stringify(datosCliente)) // Convertir datosCliente a JSON
+                        .input('fechaApertura', fechaApertura || new Date()) // Si no se pasa, se usa la fecha actual
                         .input('idClienteFK', idClienteFK)
                         .input('idEmpleadoFK', idEmpleadoFK || null)
                         .query(`
-                        INSERT INTO tblExpediente (numeroExpediente, estado, descripcion, nombreExpediente, idClienteFK, idEmpleadoFK)
-                        VALUES (@numeroExpediente, @estado, @descripcion, @nombreExpediente, @idClienteFK, @idEmpleadoFK);
+                        INSERT INTO tblExpediente (
+                            numeroExpediente, 
+                            estadoExpediente, 
+                            nombreServicio, 
+                            datosAbogado, 
+                            datosCliente, 
+                            fechaApertura, 
+                            idClienteFK, 
+                            idEmpleadoFK
+                        )
+                        VALUES (
+                            @numeroExpediente, 
+                            @estadoExpediente, 
+                            @nombreServicio, 
+                            @datosAbogado, 
+                            @datosCliente, 
+                            @fechaApertura, 
+                            @idClienteFK, 
+                            @idEmpleadoFK
+                        );
                         SELECT SCOPE_IDENTITY() AS idExpediente;
                     `);
                     // Obtener el idExpediente recién creado
