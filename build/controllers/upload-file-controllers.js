@@ -219,7 +219,7 @@ class ExpedienteController {
     crearExpediente(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { estado, nombreServicio, datosAbogado, datosCliente, fechaApertura, idClienteFK, idEmpleadoFK, } = req.body;
+                const { estado, nombreServicio, datosAbogado, descripcion, datosCliente, fechaApertura, idClienteFK, idEmpleadoFK, } = req.body;
                 // Validación de campos obligatorios
                 if (!estado || !idClienteFK || !nombreServicio) {
                     return res.status(400).json({ error: 'Faltan campos obligatorios' });
@@ -232,20 +232,19 @@ class ExpedienteController {
                 const pool = yield (0, db_1.connectDB)();
                 const clienteExistente = yield pool.request()
                     .input('idCliente', idClienteFK)
-                    .query('SELECT idCliente, nombreCliente, aPCliente, aMCliente FROM tblCliente WHERE idCliente = @idCliente');
+                    .query('SELECT idCliente, nombreCliente, aPCliente, aMCliente, direccion, correo, telefono FROM tblCliente  WHERE idCliente = @idCliente');
                 if (clienteExistente.recordset.length === 0) {
                     return res.status(404).json({ error: 'El cliente especificado no existe' });
                 }
-                // Obtener datos del cliente
                 const cliente = clienteExistente.recordset[0];
-                const { nombreCliente, aPCliente, aMCliente } = cliente;
+                const { nombreCliente, aPCliente, aMCliente, direccion, correo, telefono } = cliente;
                 // Generar el número de expediente: "EXP" + inicial del nombre + inicial del apellido paterno + inicial del apellido materno
                 const numeroExpediente = `EXP${nombreCliente.charAt(0)}${aPCliente.charAt(0)}${aMCliente.charAt(0)}${Math.floor(Math.random() * 10000)}`;
                 // Validación de empleado
                 if (idEmpleadoFK) {
                     const empleadoExistente = yield pool.request()
                         .input('idEmpleado', idEmpleadoFK)
-                        .query('SELECT idEmpleado FROM tblEmpleado WHERE idEmpleado = @idEmpleado');
+                        .query('SELECT idEmpleado ,numeroLicencia, correo,nombreEmpleado, aPEmpleado,aMEmpleado , telefono FROM tblEmpleado WHERE idEmpleado = @idEmpleado');
                     if (empleadoExistente.recordset.length === 0) {
                         return res.status(404).json({ error: 'El empleado especificado no existe' });
                     }
@@ -257,7 +256,8 @@ class ExpedienteController {
                     // Insertar el expediente
                     const result = yield transaction.request()
                         .input('numeroExpediente', numeroExpediente)
-                        .input('estadoExpediente', estado)
+                        .input('estado', estado)
+                        .input('descripcion', descripcion)
                         .input('nombreServicio', nombreServicio)
                         .input('datosAbogado', JSON.stringify(datosAbogado))
                         .input('datosCliente', JSON.stringify(datosCliente))
@@ -267,7 +267,8 @@ class ExpedienteController {
                         .query(`
                         INSERT INTO tblExpediente (
                             numeroExpediente, 
-                            estadoExpediente, 
+                            estado, 
+                            descripcion,
                             nombreServicio, 
                             datosAbogado, 
                             datosCliente, 
@@ -277,7 +278,8 @@ class ExpedienteController {
                         )
                         VALUES (
                             @numeroExpediente, 
-                            @estadoExpediente, 
+                            @estado, 
+                            @descripcion,
                             @nombreServicio, 
                             @datosAbogado, 
                             @datosCliente, 
