@@ -11,7 +11,7 @@ class CargarDocumentosController {
             
             // Consulta para obtener los expedientes
             const result = await pool.request().query(`
-                SELECT idExpediente, idClienteFK, idEmpleadoFK, numeroExpediente, numeroExpediente
+                SELECT idExpediente, idClienteFK, idEmpleadoFK, numeroExpediente, nombreExpediente
                 FROM tblExpediente
                 ORDER BY idExpediente DESC
             `);
