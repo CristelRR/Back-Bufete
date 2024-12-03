@@ -127,6 +127,8 @@ class ExpedienteController {
                         e.estado,
                         e.descripcion,
                         e.nombreExpediente,
+                        e.datosAbogado,
+                        e.datosCliente,
                         d.documentoBase64,
                         d.fechaSubida,
                         d.estado AS estadoDocumento,
@@ -154,6 +156,8 @@ class ExpedienteController {
                         fechaCreacion: row.fechaCreacion,
                         estado: row.estado,
                         descripcion: row.descripcion,
+                        datosAbogado: row.datosAbogado,
+                        datosCliente: row.datosCliente,
                         nombreExpediente: row.nombreExpediente,
                         documentos: []
                     });
@@ -240,6 +244,7 @@ class ExpedienteController {
                 const { nombreCliente, aPCliente, aMCliente, direccion, correo, telefono } = cliente;
                 // Generar el número de expediente: "EXP" + inicial del nombre + inicial del apellido paterno + inicial del apellido materno
                 const numeroExpediente = `EXP${nombreCliente.charAt(0)}${aPCliente.charAt(0)}${aMCliente.charAt(0)}${Math.floor(Math.random() * 10000)}`;
+                const nombreExpediente = `Cliente: ${nombreCliente} ${aPCliente} ${aMCliente}`;
                 // Validación de empleado
                 if (idEmpleadoFK) {
                     const empleadoExistente = yield pool.request()
@@ -255,6 +260,7 @@ class ExpedienteController {
                 try {
                     // Insertar el expediente
                     const result = yield transaction.request()
+                        .input('nombreExpediente', nombreExpediente)
                         .input('numeroExpediente', numeroExpediente)
                         .input('estado', estado)
                         .input('descripcion', descripcion)
@@ -266,6 +272,7 @@ class ExpedienteController {
                         .input('idEmpleadoFK', idEmpleadoFK || null)
                         .query(`
                         INSERT INTO tblExpediente (
+                            nombreExpediente,
                             numeroExpediente, 
                             estado, 
                             descripcion,
@@ -277,6 +284,7 @@ class ExpedienteController {
                             idEmpleadoFK
                         )
                         VALUES (
+                            @nombreExpediente,
                             @numeroExpediente, 
                             @estado, 
                             @descripcion,
