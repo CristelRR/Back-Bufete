@@ -19,7 +19,7 @@ class CargarDocumentosController {
                 const pool = yield (0, db_1.connectDB)();
                 // Consulta para obtener los expedientes
                 const result = yield pool.request().query(`
-                SELECT idExpediente, idClienteFK, idEmpleadoFK, numeroExpediente, numeroExpediente
+                SELECT idExpediente, idClienteFK, idEmpleadoFK, numeroExpediente, nombreExpediente
                 FROM tblExpediente
                 ORDER BY idExpediente DESC
             `);
