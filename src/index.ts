@@ -14,6 +14,7 @@ import loginRoutes from './routes/login-routes';
 import registerRoutes from './routes/register-routes';
 import expedienteRoutes from './routes/upload-file-routes';
 import pagoRoutes from './routes/gestionPago-route';
+import expedienteNRoutes from './routes/expediente-route';
 
 class Server {
     public app: Application;
@@ -59,6 +60,8 @@ class Server {
         this.app.use('/agendas', agendaRoutes);
         this.app.use('/pagos', pagoRoutes);
         this.app.use('/expedientes', expedienteRoutes);
+        this.app.use('/expedienteN', expedienteNRoutes);
+
     }
 
     start(): void {

@@ -28,6 +28,7 @@ const login_routes_1 = __importDefault(require("./routes/login-routes"));
 const register_routes_1 = __importDefault(require("./routes/register-routes"));
 const upload_file_routes_1 = __importDefault(require("./routes/upload-file-routes"));
 const gestionPago_route_1 = __importDefault(require("./routes/gestionPago-route"));
+const expediente_route_1 = __importDefault(require("./routes/expediente-route"));
 class Server {
     constructor() {
         this.app = (0, express_1.default)();
@@ -70,6 +71,7 @@ class Server {
         this.app.use('/agendas', agenda_route_1.default);
         this.app.use('/pagos', gestionPago_route_1.default);
         this.app.use('/expedientes', upload_file_routes_1.default);
+        this.app.use('/expedienteN', expediente_route_1.default);
     }
     start() {
         this.app.listen(this.app.get('port'), () => {
