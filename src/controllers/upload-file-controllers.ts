@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { connectDB } from "../config/db";
+const { PDFDocument } = require('pdf-lib'); // Librería para manipular PDFs
+const sql = require('mssql'); // Librería para conectarse a SQL Server
 import fs from "fs";
 import path from "path";
 
@@ -10,6 +12,8 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 class ExpedienteController {
+
+    
 
     async obtenerExpedienteCompleto(req: Request, res: Response): Promise<void> {
         try {
@@ -112,76 +116,78 @@ class ExpedienteController {
         }
     }
 
-    obtenerExpedientes(req: Request, res: Response): void {
-        connectDB()
-            .then(pool => {
-                const query = `
-                    SELECT 
-                        e.idExpediente,
-                        e.numeroExpediente,
-                        e.fechaCreacion,
-                        e.estado,
-                        e.descripcion,
-                        e.nombreExpediente,
-                        e.datosAbogado,
-                        e.datosCliente,
-                        d.documentoBase64,
-                        d.fechaSubida,
-                        d.estado AS estadoDocumento,
-                        d.idTipoDocumentoFK,
-                        td.tipoDocumento
-                    FROM 
-                        tblExpediente e
-                    LEFT JOIN 
-                        tblDocumentosExpediente d ON e.idExpediente = d.idExpedienteFK
-                    LEFT JOIN
-                        tblTipoDocumento td ON d.idTipoDocumentoFK = td.idTipoDocumento;
-                `;
-                return pool.request().query(query);
-            })
-            .then(result => {
-                // Agrupamos los documentos por expediente
-                const expedientesMap = new Map();
+    async obtenerExpedientes(req: Request, res: Response): Promise<void> {
+        try {
+            const pool = await connectDB();
+            
+            // Consulta SQL para obtener expedientes con sus documentos
+            const query = `
+                SELECT 
+                    e.idExpediente,
+                    e.numeroExpediente,
+                    e.fechaCreacion,
+                    e.estado AS estadoExpediente,
+                    e.descripcion,
+                    e.nombreExpediente,
+                    e.datosAbogado,
+                    e.datosCliente,
+                    d.idDocumento,
+                    d.documentoBase64,
+                    d.fechaSubida,
+                    d.estado AS estadoDocumento,
+                    td.tipoDocumento
+                FROM 
+                    tblExpediente e
+                LEFT JOIN 
+                    tblDocumentosExpediente d ON e.idExpediente = d.idExpedienteFK
+                LEFT JOIN 
+                    tblTipoDocumento td ON d.idTipoDocumentoFK = td.idTipoDocumento;
+            `;
+            
+            const result = await pool.request().query(query);
+            
+            // Mapeamos los expedientes y sus documentos
+            const expedientesMap = new Map();
     
-                result.recordset.forEach((row: any) => {
-                    const expedienteId = row.idExpediente;
+            result.recordset.forEach((row: any) => {
+                const expedienteId = row.idExpediente;
     
-                    // Verificamos si el expediente ya existe en el mapa
-                    if (!expedientesMap.has(expedienteId)) {
-                        expedientesMap.set(expedienteId, {
-                            idExpediente: row.idExpediente,
-                            numeroExpediente: row.numeroExpediente,
-                            fechaCreacion: row.fechaCreacion,
-                            estado: row.estado,
-                            descripcion: row.descripcion,
-                            datosAbogado: row.datosAbogado,
-                            datosCliente: row.datosCliente,
-                            nombreExpediente: row.nombreExpediente,
-                            documentos: []
-                        });
-                    }
+                if (!expedientesMap.has(expedienteId)) {
+                    expedientesMap.set(expedienteId, {
+                        idExpediente: row.idExpediente,
+                        numeroExpediente: row.numeroExpediente,
+                        fechaCreacion: row.fechaCreacion,
+                        estado: row.estadoExpediente,
+                        descripcion: row.descripcion,
+                        nombreExpediente: row.nombreExpediente,
+                        datosAbogado: row.datosAbogado,
+                        datosCliente: row.datosCliente,
+                        documentos: []
+                    });
+                }
     
-                    // Agregamos el documento si existe en el registro
-                    if (row.documentoBase64) {
-                        expedientesMap.get(expedienteId).documentos.push({
-                            documentoBase64: row.documentoBase64,
-                            fechaSubida: row.fechaSubida,
-                            estadoDocumento: row.estadoDocumento,
-                            tipoDocumento: row.tipoDocumento
-                        });
-                    }
-                });
-    
-                // Convertimos el mapa en un arreglo de expedientes
-                const expedientes = Array.from(expedientesMap.values());
-    
-                res.status(200).json(expedientes);
-            })
-            .catch(error => {
-                console.error('Error al obtener los expedientes:', error);
-                res.status(500).json({ error: 'Error al obtener los expedientes' });
+                if (row.idDocumento) {
+                    expedientesMap.get(expedienteId).documentos.push({
+                        idDocumento: row.idDocumento,
+                        documentoBase64: row.documentoBase64,
+                        fechaSubida: row.fechaSubida,
+                        estado: row.estadoDocumento,
+                        tipoDocumento: row.tipoDocumento
+                    });
+                }
             });
+    
+            // Convertimos el mapa en un arreglo de expedientes
+            const expedientes = Array.from(expedientesMap.values());
+    
+            res.status(200).json(expedientes);
+        } catch (error) {
+            console.error('Error al obtener los expedientes:', error);
+            res.status(500).json({ error: 'Error al obtener los expedientes' });
+        }
     }
+    
+    
 
     async insertarDocumentos(req: Request, res: Response) {
         try {

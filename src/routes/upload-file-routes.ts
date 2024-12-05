@@ -2,6 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import { expedienteController } from "../controllers/upload-file-controllers";
 
+
 class ExpedienteRoutes {
     public router: Router = Router();
     private upload = multer({ dest: 'uploads/' });
