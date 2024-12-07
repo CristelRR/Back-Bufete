@@ -14,7 +14,7 @@ class CitaExpedienteController {
 
     async getExpediente(req: Request, res: Response) {
         try {
-            const expediente = await citaExpedienteModel.getExpediente();  // Corregido aquí
+            const expediente = await citaExpedienteModel.getExpediente();
             res.json(expediente);
         } catch (error) {
             console.error('Error al obtener expediente:', error);

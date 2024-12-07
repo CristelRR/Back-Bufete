@@ -31,31 +31,74 @@ class CargarDocumentosController {
             }
         });
     }
-    // Método para obtener los tipos de documentos con su jerarquía
-    obtenerTiposDeDocumentos(req, res) {
+    obtenerCategoriasYSubcategorias(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const pool = yield (0, db_1.connectDB)();
-                // Obtenemos los tipos de documentos con su jerarquía (padre e hijo)
+                // Consulta para obtener las categorías y subcategorías
                 const result = yield pool.request().query(`
-                WITH TipoDocumentoJerarquico AS (
-                    SELECT idTipoDocumento, tipoDocumento, idPadre
-                    FROM tblTipoDocumento
-                )
-                SELECT td.idTipoDocumento, td.tipoDocumento, td.idPadre, tds.tipoDocumento AS tipoDocumentoPadre
-                FROM TipoDocumentoJerarquico td
-                LEFT JOIN TipoDocumentoJerarquico tds ON td.idPadre = tds.idTipoDocumento
-                ORDER BY td.idPadre, td.tipoDocumento
+                    SELECT 
+                        c.idCategoria AS idCategoria,
+                        c.nombreCategoria AS nombreCategoria,
+                        sc.idSubCategoria AS idSubCategoria,
+                        sc.nombreSubCategoria AS nombreSubCategoria
+                    FROM tblCategoriasDocumento c
+                    LEFT JOIN tblSubCategoriasDocumento sc ON c.idCategoria = sc.idCategoriaFK
+                    ORDER BY c.nombreCategoria, sc.nombreSubCategoria
+                `);
+                const categorias = {};
+                // Transformar los datos para que tengan una estructura jerárquica
+                result.recordset.forEach((row) => {
+                    const { idCategoria, nombreCategoria, idSubCategoria, nombreSubCategoria } = row;
+                    if (!categorias[idCategoria]) {
+                        categorias[idCategoria] = {
+                            idCategoria,
+                            nombreCategoria,
+                            subCategorias: []
+                        };
+                    }
+                    if (idSubCategoria) {
+                        categorias[idCategoria].subCategorias.push({
+                            idSubCategoria,
+                            nombreSubCategoria
+                        });
+                    }
+                });
+                // Convertir el objeto en un array para la respuesta
+                const categoriasArray = Object.values(categorias);
+                res.status(200).json(categoriasArray);
+            }
+            catch (error) {
+                console.error('Error al obtener categorías y subcategorías:', error);
+                res.status(500).json({ error: 'Hubo un error al obtener las categorías y subcategorías.' });
+            }
+        });
+    }
+    // Método para obtener solo las subcategorías de una categoría específica
+    obtenerSubCategorias(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { idCategoria } = req.params; // Obtener el ID de la categoría de los parámetros
+                const pool = yield (0, db_1.connectDB)();
+                // Consulta para obtener las subcategorías de una categoría específica
+                const result = yield pool.request()
+                    .input('idCategoria', idCategoria)
+                    .query(`
+                SELECT 
+                    sc.idSubCategoria AS idSubCategoria,
+                    sc.nombreSubCategoria AS nombreSubCategoria
+                FROM tblSubCategoriasDocumento sc
+                WHERE sc.idCategoriaFK = @idCategoria
+                ORDER BY sc.nombreSubCategoria
             `);
                 res.status(200).json(result.recordset);
             }
             catch (error) {
-                console.error('Error al obtener tipos de documentos:', error);
-                res.status(500).json({ error: 'Hubo un error al obtener los tipos de documentos.' });
+                console.error('Error al obtener subcategorías:', error);
+                res.status(500).json({ error: 'Hubo un error al obtener las subcategorías.' });
             }
         });
     }
-    // Método para insertar documentos
     insertarDocumentos(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -66,22 +109,43 @@ class CargarDocumentosController {
                 }
                 const pool = yield (0, db_1.connectDB)();
                 const errores = [];
+                // Obtener las categorías y subcategorías válidas de una vez
+                const categoriasYSubcategorias = yield pool.request().query(`
+            SELECT c.idCategoria, sc.idSubCategoria
+            FROM tblCategoriasDocumento c
+            LEFT JOIN tblSubCategoriasDocumento sc ON c.idCategoria = sc.idCategoriaFK
+        `);
+                // Crear un set para la validación rápida
+                const categoriasValidas = new Set();
+                categoriasYSubcategorias.recordset.forEach((row) => {
+                    categoriasValidas.add(`${row.idCategoria}-${row.idSubCategoria}`);
+                });
+                // Validación de cada documento
                 for (const doc of documentos) {
-                    const { documentoBase64, idTipoDocumentoFK } = doc;
-                    // Validaciones
-                    if (!documentoBase64 || !idTipoDocumentoFK) {
-                        errores.push('Cada documento debe incluir Base64 y un ID de tipo de documento.');
+                    const { documentoBase64, idCategoriaFK, idSubCategoriaFK } = doc;
+                    // Validar campos
+                    if (!documentoBase64 || !idCategoriaFK || !idSubCategoriaFK) {
+                        errores.push('Cada documento debe incluir Base64, una categoría y una subcategoría.');
                         continue;
                     }
-                    // Inserción en la base de datos
+                    // Validar que la categoría y subcategoría son válidas
+                    if (!categoriasValidas.has(`${idCategoriaFK}-${idSubCategoriaFK}`)) {
+                        errores.push(`Categoría o subcategoría inválida para documento.`);
+                        continue;
+                    }
+                    // Inserción en la base de datos si todo es válido
                     yield pool.request()
                         .input('idExpedienteFK', expedienteId)
-                        .input('idTipoDocumentoFK', idTipoDocumentoFK)
+                        .input('idCategoriaFK', idCategoriaFK)
+                        .input('idSubCategoriaFK', idSubCategoriaFK)
                         .input('documentoBase64', documentoBase64)
                         .query(`
-                        INSERT INTO tblDocumentosExpediente (idExpedienteFK, idTipoDocumentoFK, documentoBase64, fechaSubida, estado)
-                        VALUES (@idExpedienteFK, @idTipoDocumentoFK, @documentoBase64, GETDATE(), 'Pendiente');
-                    `);
+                    INSERT INTO tblDocumentosExpediente (
+                        idExpedienteFK, idCategoriaFK, idSubCategoriaFK, documentoBase64, fechaSubida, estado
+                    ) VALUES (
+                        @idExpedienteFK, @idCategoriaFK, @idSubCategoriaFK, @documentoBase64, GETDATE(), 'pendiente'
+                    );
+                `);
                 }
                 if (errores.length > 0) {
                     return res.status(400).json({ errors: errores });

@@ -73,9 +73,9 @@ class Server {
         this.app.use('/agendas', agenda_route_1.default);
         this.app.use('/pagos', gestionPago_route_1.default);
         this.app.use('/expedientes', upload_file_routes_1.default);
+        this.app.use('/expedienteN', expediente_route_1.default);
         this.app.use('/documentos', cargarDocumentos_route_1.default);
         this.app.use('/citasExpediente', citas_expedientes_routes_1.default);
-        this.app.use('/expedienteN', expediente_route_1.default);
     }
     start() {
         this.app.listen(this.app.get('port'), () => {
