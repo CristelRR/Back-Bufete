@@ -2,34 +2,37 @@ import { connectDB } from "../config/db";
 import { Request, Response } from "express";
 
 class CitaExpedienteModel {
-    async getCitasExpediente() {
+    async getCitasExpediente(idExpediente: number) {
         const pool = await connectDB();
         try {
-            const result = await pool.request().query(`
-                SELECT 
-                    c.idCita,
-                    c.fecha,
-                    c.hora,
-                    c.motivo,
-                    c.notas,
-                    c.estado AS estadoCita,
-                    e.nombreExpediente,
-                    CONCAT(cli.nombreCliente, ' ', cli.aPCliente, ' ', cli.aMCliente) AS nombreCliente,
-                    s.nombreServicio
-                FROM LEXVARGAS_BD.dbo.tblCitasExpediente c
-                INNER JOIN LEXVARGAS_BD.dbo.tblExpediente e ON c.idExpediente = e.idExpediente
-                INNER JOIN LEXVARGAS_BD.dbo.tblCliente cli ON e.idClienteFK = cli.idCliente
-                LEFT JOIN LEXVARGAS_BD.dbo.tblCliente_Servicio cs ON cli.idCliente = cs.idCliente
-                LEFT JOIN LEXVARGAS_BD.dbo.tblServicio s ON cs.idServicio = s.idServicio;
-            `);
+            const result = await pool.request()
+                .input('idExpediente', idExpediente)
+                .query(`
+                    SELECT 
+                        c.idCita,
+                        c.fecha,
+                        c.hora,
+                        c.motivo,
+                        c.notas,
+                        c.estado AS estadoCita,
+                        e.nombreExpediente,
+                        CONCAT(cli.nombreCliente, ' ', cli.aPCliente, ' ', cli.aMCliente) AS nombreCliente,
+                        s.nombreServicio
+                    FROM LEXVARGAS_BD.dbo.tblCitasExpediente c
+                    INNER JOIN LEXVARGAS_BD.dbo.tblExpediente e ON c.idExpediente = e.idExpediente
+                    INNER JOIN LEXVARGAS_BD.dbo.tblCliente cli ON e.idClienteFK = cli.idCliente
+                    LEFT JOIN LEXVARGAS_BD.dbo.tblCliente_Servicio cs ON cli.idCliente = cs.idCliente
+                    LEFT JOIN LEXVARGAS_BD.dbo.tblServicio s ON cs.idServicio = s.idServicio
+                    WHERE c.idExpediente = @idExpediente;
+                `);
             return result.recordset;
         } catch (error) {
-            if (error instanceof Error) {
-                throw new Error(`Error al obtener citas: ${error.message}`);
-            }
-            throw new Error('Error al obtener citas: Error desconocido');
+            console.error("Error al obtener citas del expediente:", error);
+            throw error;
         }
     }
+
+
     async getExpediente() {
         const pool = await connectDB();
         try {

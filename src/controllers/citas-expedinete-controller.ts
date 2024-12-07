@@ -2,15 +2,22 @@ import { Request, Response } from "express";
 import citaExpedienteModel from "../models/cita-expediente-model";
 
 class CitaExpedienteController {
-    async getCitasExpediente(req: Request, res: Response) {
+    async getCitasExpediente(req: Request, res: Response): Promise<Response> {
+        const { idExpediente } = req.params; // Obtén el ID del expediente desde los parámetros
         try {
-            const citas = await citaExpedienteModel.getCitasExpediente();
-            res.json(citas);
+            // Valida que idExpediente sea un número válido
+            if (!idExpediente || isNaN(Number(idExpediente))) {
+                return res.status(400).json({ message: "ID de expediente inválido." });
+            }
+    
+            const citas = await citaExpedienteModel.getCitasExpediente(Number(idExpediente));
+            return res.json(citas); // Asegúrate de retornar la respuesta
         } catch (error) {
-            console.error('Error al obtener citas:', error);
-            res.status(500).json({ message: 'Error al obtener citas' });
+            console.error("Error al obtener citas:", error);
+            return res.status(500).json({ message: "Error al obtener citas" }); // Asegúrate de retornar la respuesta
         }
     }
+    
 
     async getExpediente(req: Request, res: Response) {
         try {
