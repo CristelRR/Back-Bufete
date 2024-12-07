@@ -17,13 +17,18 @@ const cita_expediente_model_1 = __importDefault(require("../models/cita-expedien
 class CitaExpedienteController {
     getCitasExpediente(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
+            const { idExpediente } = req.params; // Obtén el ID del expediente desde los parámetros
             try {
-                const citas = yield cita_expediente_model_1.default.getCitasExpediente();
-                res.json(citas);
+                // Valida que idExpediente sea un número válido
+                if (!idExpediente || isNaN(Number(idExpediente))) {
+                    return res.status(400).json({ message: "ID de expediente inválido." });
+                }
+                const citas = yield cita_expediente_model_1.default.getCitasExpediente(Number(idExpediente));
+                return res.json(citas); // Asegúrate de retornar la respuesta
             }
             catch (error) {
-                console.error('Error al obtener citas:', error);
-                res.status(500).json({ message: 'Error al obtener citas' });
+                console.error("Error al obtener citas:", error);
+                return res.status(500).json({ message: "Error al obtener citas" }); // Asegúrate de retornar la respuesta
             }
         });
     }

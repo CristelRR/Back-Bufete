@@ -9,7 +9,7 @@ class CitaExpedineteRoutes {
     }
 
     config() {
-        this.router.get('/', citaExpedienteController.getCitasExpediente);
+        this.router.get('/:idExpediente', citaExpedienteController.getCitasExpediente);
         this.router.post('/', citaExpedienteController.crearCitaExpediente);
         this.router.put('/', citaExpedienteController.updateCitaExpediente);
         this.router.delete('/', citaExpedienteController.deleteCitaExpediente);
