@@ -11,8 +11,9 @@ class CargarDocumentosRoutes {
 
     config(): void {
         this.router.post('/subirDocumento', cargarDocumentosController.insertarDocumentos);
-        this.router.get('/tiposDocumentos', cargarDocumentosController.obtenerTiposDeDocumentos);
+        this.router.get('/obtenerCategoriasYSubcategorias', cargarDocumentosController.obtenerCategoriasYSubcategorias);
         this.router.get('/obtenerExp', cargarDocumentosController.obtenerExpedientes);
+        this.router.get('/obtenerSubCategorias/:idCategoria', cargarDocumentosController.obtenerSubCategorias);
 
     }
 }

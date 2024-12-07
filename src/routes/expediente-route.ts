@@ -13,8 +13,8 @@ class ExpedienteNRoutes {
         this.router.post('/', expedienteNController.crearExpediente);
         this.router.put('/', expedienteNController.updateExpediente);
         this.router.delete('/:id', expedienteNController.deleteExpediente);
-        this.router.get('/informacion-general/:numeroExpediente', expedienteNController.informacionGeneral);
-        this.router.get('/partes-expediente/:numeroExpediente', expedienteNController.obtenerPartes);
+        this.router.get('/informacion-general/:idExpediente', expedienteNController.informacionGeneral);
+        this.router.get('/partes-expediente/:idExpediente', expedienteNController.obtenerPartes);
     }
 }
 

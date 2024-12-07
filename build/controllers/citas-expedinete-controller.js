@@ -30,7 +30,7 @@ class CitaExpedienteController {
     getExpediente(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const expediente = yield cita_expediente_model_1.default.getExpediente(); // Corregido aquí
+                const expediente = yield cita_expediente_model_1.default.getExpediente();
                 res.json(expediente);
             }
             catch (error) {

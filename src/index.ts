@@ -63,7 +63,6 @@ class Server {
         this.app.use('/pagos', pagoRoutes);
         this.app.use('/expedientes', expedienteRoutes);
         this.app.use('/expedienteN', expedienteNRoutes);
-
         this.app.use('/documentos', cargarDocumentosRoute);
         this.app.use('/citasExpediente', citasExpedientesRoutes); 
     }
