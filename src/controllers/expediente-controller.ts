@@ -104,6 +104,36 @@ class ExpedienteNController {
             res.status(500).json({ message: 'Error interno del servidor.' });
         }
     }
+
+    async agregarParte(req: Request, res: Response) {
+        try {
+            const { tipoParte, parteData } = req.body; // Recibe tipoParte y datos de la parte
+
+            if (!tipoParte || !parteData) {
+                return res.status(400).json({ message: 'Tipo de parte y datos son requeridos.' });
+            }
+
+            let result;
+            switch (tipoParte) {
+                case 'Demandante':
+                    result = await expedienteNModel.agregarParteDemandante(parteData);
+                    break;
+                case 'Demandado':
+                    result = await expedienteNModel.agregarParteDemandada(parteData);
+                    break;
+                case 'Tercero':
+                    result = await expedienteNModel.agregarTerceroRelacionado(parteData);
+                    break;
+                default:
+                    return res.status(400).json({ message: 'Tipo de parte no válido.' });
+            }
+
+            res.status(201).json({ message: 'Parte agregada exitosamente.', result });
+        } catch (error) {
+            console.error('Error al agregar parte:', error);
+            res.status(500).json({ message: 'Error interno del servidor.' });
+        }
+    }
     
 
 
