@@ -147,9 +147,9 @@ class ExpedienteController {
                 ORDER BY 
                     CASE 
                         WHEN e.estado = 'Prioridad Alta' THEN 1
-                        ELSE 2
+                        WHEN e.estado = 'Archivado' THEN 2
+                        ELSE 3
                     END;
-
             `;
                 const result = yield pool.request().query(query);
                 // Mapeamos los expedientes y sus documentos
