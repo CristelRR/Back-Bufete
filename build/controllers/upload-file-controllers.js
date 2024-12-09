@@ -143,7 +143,13 @@ class ExpedienteController {
                 LEFT JOIN 
                     tblDocumentosExpediente d ON e.idExpediente = d.idExpedienteFK
                 LEFT JOIN 
-                    tblTipoDocumento td ON d.idTipoDocumentoFK = td.idTipoDocumento;
+                    tblTipoDocumento td ON d.idTipoDocumentoFK = td.idTipoDocumento
+                ORDER BY 
+                    CASE 
+                        WHEN e.estado = 'Prioridad Alta' THEN 1
+                        ELSE 2
+                    END;
+
             `;
                 const result = yield pool.request().query(query);
                 // Mapeamos los expedientes y sus documentos

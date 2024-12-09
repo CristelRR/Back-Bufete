@@ -141,7 +141,13 @@ class ExpedienteController {
                 LEFT JOIN 
                     tblDocumentosExpediente d ON e.idExpediente = d.idExpedienteFK
                 LEFT JOIN 
-                    tblTipoDocumento td ON d.idTipoDocumentoFK = td.idTipoDocumento;
+                    tblTipoDocumento td ON d.idTipoDocumentoFK = td.idTipoDocumento
+                ORDER BY 
+                    CASE 
+                        WHEN e.estado = 'Prioridad Alta' THEN 1
+                        ELSE 2
+                    END;
+
             `;
             
             const result = await pool.request().query(query);
@@ -186,8 +192,6 @@ class ExpedienteController {
             res.status(500).json({ error: 'Error al obtener los expedientes' });
         }
     }
-    
-    
 
     async insertarDocumentos(req: Request, res: Response) {
         try {
@@ -333,8 +337,6 @@ class ExpedienteController {
         }
     }
     
-    
-
     async obtenerExpediente(req: Request, res: Response): Promise<void> {
         try {
             const { idExpediente } = req.params;
