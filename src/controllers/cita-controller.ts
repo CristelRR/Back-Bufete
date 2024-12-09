@@ -285,6 +285,21 @@ class CitaController {
         }
     }
 
+    //Método para consutar las citas que pertenecen a un expediente
+    async getCitasCompletadasByExpediente(req: Request, res: Response) {
+        try {
+            const { numeroExpediente } = req.params; // Obtener el número de expediente desde los parámetros
+            if (!numeroExpediente) {
+                return res.status(400).json({ message: 'Número de expediente no proporcionado' });
+            }
+    
+            const citas = await citaModel.getCitasCompletadasByExpediente(numeroExpediente);
+            res.json(citas); // Responder con las citas completadas
+        } catch (error) {
+            console.error('Error al obtener citas completadas por expediente:', error);
+            res.status(500).json({ message: 'Error al obtener citas completadas por expediente' });
+        }
+    }    
 
 }
 

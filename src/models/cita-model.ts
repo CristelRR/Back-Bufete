@@ -441,11 +441,39 @@ class CitaModel {
                     C.idCita = @idCita;
             `);
         return result.recordset[0]; // Devuelve el primer (y único) registro
-    }
+    }  
     
-    
-    
-    
+    //Método para consutar las citas que pertenecen a un expediente
+    async getCitasCompletadasByExpediente(numeroExpediente: string) {
+        const pool = await connectDB();
+        const result = await pool.request()
+            .input('numeroExpediente', numeroExpediente)
+            .query(`
+                SELECT 
+                    c.idCita,
+                    c.motivo,
+                    c.estado AS estadoCita,
+                    c.idAgendaFK,
+                    c.idServicioFK,
+                    e.numeroExpediente,
+                    e.nombreExpediente,
+                    cl.idCliente,
+                    CONCAT(cl.nombreCliente, ' ', cl.aPCliente, ' ', cl.aMCliente) AS nombreCliente,
+                    cl.direccion,
+                    cl.telefono,
+                    cl.correo
+                FROM 
+                    tblCita AS c
+                INNER JOIN 
+                    tblExpediente AS e ON c.idClienteFK = e.idClienteFK
+                INNER JOIN 
+                    tblCliente AS cl ON e.idClienteFK = cl.idCliente
+                WHERE 
+                    e.numeroExpediente = @numeroExpediente
+                    AND c.estado = 'completada';
+            `);
+        return result.recordset;
+    }   
 }
 
 const citaModel = new CitaModel();
