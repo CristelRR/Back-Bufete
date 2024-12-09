@@ -246,47 +246,48 @@ class ExpedienteController {
                 idEmpleadoFK,
             } = req.body;
     
-            // Validación de campos obligatorios
             if (!estado || !idClienteFK || !nombreServicio) {
                 return res.status(400).json({ error: 'Faltan campos obligatorios' });
             }
     
-            // Validar la estructura de los datos de abogado y cliente
-            if (!datosAbogado || !datosCliente) {
-                return res.status(400).json({ error: 'Faltan datos de abogado o cliente' });
+            if (typeof datosAbogado !== 'object' || typeof datosCliente !== 'object') {
+                return res.status(400).json({ error: 'Los datos de abogado y cliente deben ser objetos válidos.' });
             }
     
-            // Validar idClienteFK e idEmpleadoFK en la base de datos
             const pool = await connectDB();
             const clienteExistente = await pool.request()
                 .input('idCliente', idClienteFK)
-                .query('SELECT idCliente, nombreCliente, aPCliente, aMCliente, direccion, correo, telefono FROM tblCliente  WHERE idCliente = @idCliente');
-            
+                .query('SELECT idCliente, nombreCliente, aPCliente, aMCliente FROM tblCliente WHERE idCliente = @idCliente');
+    
             if (clienteExistente.recordset.length === 0) {
                 return res.status(404).json({ error: 'El cliente especificado no existe' });
             }
-            const cliente = clienteExistente.recordset[0];
-            const { nombreCliente, aPCliente, aMCliente, direccion, correo, telefono } = cliente;
-    
-            // Generar el número de expediente: "EXP" + inicial del nombre + inicial del apellido paterno + inicial del apellido materno
+            const { nombreCliente, aPCliente, aMCliente } = clienteExistente.recordset[0];
             const numeroExpediente = `EXP${nombreCliente.charAt(0)}${aPCliente.charAt(0)}${aMCliente.charAt(0)}${Math.floor(Math.random() * 10000)}`;
             const nombreExpediente = `Cliente: ${nombreCliente} ${aPCliente} ${aMCliente}`;
-            // Validación de empleado
+    
+            const expedienteExistente = await pool.request()
+                .input('numeroExpediente', numeroExpediente)
+                .query('SELECT numeroExpediente FROM tblExpediente WHERE numeroExpediente = @numeroExpediente');
+    
+            if (expedienteExistente.recordset.length > 0) {
+                return res.status(409).json({ error: 'El número de expediente generado ya existe. Intenta nuevamente.' });
+            }
+    
             if (idEmpleadoFK) {
                 const empleadoExistente = await pool.request()
                     .input('idEmpleado', idEmpleadoFK)
-                    .query('SELECT idEmpleado ,numeroLicencia, correo,nombreEmpleado, aPEmpleado,aMEmpleado , telefono FROM tblEmpleado WHERE idEmpleado = @idEmpleado');
+                    .query('SELECT idEmpleado FROM tblEmpleado WHERE idEmpleado = @idEmpleado');
+    
                 if (empleadoExistente.recordset.length === 0) {
                     return res.status(404).json({ error: 'El empleado especificado no existe' });
                 }
             }
     
-            // Iniciar la transacción
             const transaction = pool.transaction();
             await transaction.begin();
     
             try {
-                // Insertar el expediente
                 const result = await transaction.request()
                     .input('nombreExpediente', nombreExpediente)
                     .input('numeroExpediente', numeroExpediente)
@@ -295,40 +296,24 @@ class ExpedienteController {
                     .input('nombreServicio', nombreServicio)
                     .input('datosAbogado', JSON.stringify(datosAbogado))
                     .input('datosCliente', JSON.stringify(datosCliente))
-                    .input('fechaApertura', fechaApertura || new Date())
+                    .input('fechaApertura', fechaApertura ? new Date(fechaApertura) : new Date())
                     .input('idClienteFK', idClienteFK)
                     .input('idEmpleadoFK', idEmpleadoFK || null)
                     .query(`
                         INSERT INTO tblExpediente (
-                            nombreExpediente,
-                            numeroExpediente, 
-                            estado, 
-                            descripcion,
-                            nombreServicio, 
-                            datosAbogado, 
-                            datosCliente, 
-                            fechaApertura, 
-                            idClienteFK, 
-                            idEmpleadoFK
+                            nombreExpediente, numeroExpediente, estado, descripcion,
+                            nombreServicio, datosAbogado, datosCliente,
+                            fechaApertura, idClienteFK, idEmpleadoFK
                         )
                         VALUES (
-                            @nombreExpediente,
-                            @numeroExpediente, 
-                            @estado, 
-                            @descripcion,
-                            @nombreServicio, 
-                            @datosAbogado, 
-                            @datosCliente, 
-                            @fechaApertura, 
-                            @idClienteFK, 
-                            @idEmpleadoFK
+                            @nombreExpediente, @numeroExpediente, @estado, @descripcion,
+                            @nombreServicio, @datosAbogado, @datosCliente,
+                            @fechaApertura, @idClienteFK, @idEmpleadoFK
                         );
                         SELECT SCOPE_IDENTITY() AS idExpediente;
                     `);
     
-                // Obtener el idExpediente recién creado
                 const idExpediente = Number(result.recordset[0].idExpediente);
-    
                 await transaction.commit();
                 return res.status(200).json({ message: 'Expediente creado correctamente', idExpediente });
     
@@ -337,11 +322,18 @@ class ExpedienteController {
                 await transaction.rollback();
                 return res.status(500).json({ error: 'Error al insertar el expediente' });
             }
-        } catch (error) {
-            console.error('Error al conectar a la base de datos:', error);
-            return res.status(500).json({ error: 'Error al conectar a la base de datos' });
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                console.error('Error al conectar a la base de datos:', error.message);
+                return res.status(500).json({ error: 'Error al conectar a la base de datos', detalles: error.message });
+            } else {
+                console.error('Error inesperado:', error);
+                return res.status(500).json({ error: 'Error inesperado al conectar a la base de datos' });
+            }
         }
     }
+    
+    
 
     async obtenerExpediente(req: Request, res: Response): Promise<void> {
         try {
