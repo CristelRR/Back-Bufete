@@ -340,6 +340,26 @@ class CitaModel {
             }
         });
     }
+    // Método para completar cita
+    completarCita(idCita) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            try {
+                yield pool.request()
+                    .input('idCita', idCita)
+                    .query(`
+                    UPDATE tblCita
+                    SET estado = 'completada'
+                    WHERE idCita = @idCita
+                `);
+                return { message: 'Estado de la cita actualizado a completada' };
+            }
+            catch (error) {
+                console.error('Error al actualizar la cita:', error);
+                throw new Error('Error al actualizar el estado de la cita: ' + error.message);
+            }
+        });
+    }
     // Método para obtener los servicios únicos asociados al cliente a través de sus citas
     getServiciosPorCitasDeCliente(idCliente) {
         return __awaiter(this, void 0, void 0, function* () {

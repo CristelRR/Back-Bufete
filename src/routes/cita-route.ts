@@ -22,6 +22,8 @@ class CitaRoutes {
         this.router.put('/cancelar', citaController.cancelarCita); 
         this.router.get('/clientes/:idCliente/servicios', citaController.getServiciosPorCitasDeCliente);
         this.router.get("/detalladas", citaController.getAllCitas); 
+        this.router.put('/completar-cita', citaController.completarCita);
+
     }
 }
 

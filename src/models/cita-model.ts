@@ -329,6 +329,27 @@ class CitaModel {
         }
     }
 
+    // Método para completar cita
+    async completarCita(idCita: number) {
+        const pool = await connectDB();
+    
+        try {
+            await pool.request()
+                .input('idCita', idCita)
+                .query(`
+                    UPDATE tblCita
+                    SET estado = 'completada'
+                    WHERE idCita = @idCita
+                `);
+    
+            return { message: 'Estado de la cita actualizado a completada' };
+        } catch (error: any) {
+            console.error('Error al actualizar la cita:', error);
+            throw new Error('Error al actualizar el estado de la cita: ' + error.message);
+        }
+    }   
+    
+
     // Método para obtener los servicios únicos asociados al cliente a través de sus citas
     async getServiciosPorCitasDeCliente(idCliente: number) {
         const pool = await connectDB();

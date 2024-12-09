@@ -136,7 +136,6 @@ class CitaController {
         });
     }
     // Método para cancelar cita
-    // Método para cancelar cita
     cancelarCita(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -168,16 +167,16 @@ class CitaController {
                                 // Construir el contenido del correo con la nueva estructura
                                 const asunto = 'Cancelación de Cita';
                                 const contenido = `
-                            <p>Estimado ${clienteNombre},</p>
-                            <p>Lamentamos informarle que su cita ha sido cancelada. A continuación, le proporcionamos los detalles de la cita:</p>
-                            <ul>
-                                <li><strong>Motivo:</strong> ${motivoCita}</li>
-                                <li><strong>Fecha:</strong> ${fecha}</li>
-                                <li><strong>Hora:</strong> ${hora}</li>
-                            </ul>
-                            <p>Si necesita reprogramar la cita, no dude en ponerse en contacto con nosotros.</p>
-                            <p>Gracias por su comprensión,<br>Equipo Legal.</p>
-                        `;
+                                <p>Estimado ${clienteNombre},</p>
+                                <p>Lamentamos informarle que su cita ha sido cancelada. A continuación, le proporcionamos los detalles de la cita:</p>
+                                <ul>
+                                    <li><strong>Motivo:</strong> ${motivoCita}</li>
+                                    <li><strong>Fecha:</strong> ${fecha}</li>
+                                    <li><strong>Hora:</strong> ${hora}</li>
+                                </ul>
+                                <p>Si necesita reprogramar la cita, no dude en ponerse en contacto con nosotros.</p>
+                                <p>Gracias por su comprensión,<br>Equipo Legal.</p>
+                            `;
                                 // Enviar correo de notificación
                                 yield (0, mailer_1.enviarCorreo)(emailCliente, asunto, contenido);
                                 console.log("Correo enviado exitosamente a:", emailCliente); // Registro para confirmar que el correo se ha enviado
@@ -202,6 +201,29 @@ class CitaController {
             catch (error) {
                 console.error('Error al cancelar la cita:', error);
                 res.status(500).json({ message: 'Error al cancelar la cita' });
+            }
+        });
+    }
+    //Método para completar cita
+    completarCita(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { idCita } = req.body;
+                if (!idCita) {
+                    return res.status(400).json({ message: 'ID de cita no proporcionado' });
+                }
+                // Llama al modelo para actualizar el estado de la cita a "completada"
+                yield cita_model_1.default.completarCita(Number(idCita));
+                // Obtén información de la cita actualizada
+                const cita = yield cita_model_1.default.findById(idCita);
+                if (!cita) {
+                    return res.status(404).json({ message: 'No se encontró la cita' });
+                }
+                res.json({ message: 'Cita completada exitosamente' });
+            }
+            catch (error) {
+                console.error('Error al completar la cita:', error);
+                res.status(500).json({ message: 'Error al completar la cita' });
             }
         });
     }
@@ -246,7 +268,6 @@ class CitaController {
             }
         });
     }
-    // Obtener servicios de un cliente
     // Método para obtener los servicios asociados a las citas de un cliente
     getServiciosPorCitasDeCliente(req, res) {
         return __awaiter(this, void 0, void 0, function* () {

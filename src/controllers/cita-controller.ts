@@ -126,79 +126,104 @@ class CitaController {
     }
     
     // Método para cancelar cita
-    // Método para cancelar cita
-async cancelarCita(req: Request, res: Response) {
-    try {
-        const { idCita } = req.body;
-        if (!idCita) {
-            return res.status(400).json({ message: 'ID de cita no proporcionado' });
-        }
+    async cancelarCita(req: Request, res: Response) {
+        try {
+            const { idCita } = req.body;
+            if (!idCita) {
+                return res.status(400).json({ message: 'ID de cita no proporcionado' });
+            }
 
-        // Llama al método cancelarCita del modelo
-        const result = await citaModel.cancelarCita(Number(idCita));
+            // Llama al método cancelarCita del modelo
+            const result = await citaModel.cancelarCita(Number(idCita));
 
-        // Obtener los datos de la cita y del cliente
-        const cita = await citaModel.findById(idCita);
-        console.log("Datos de la cita obtenidos:", cita); // Registro para verificar los datos de la cita
+            // Obtener los datos de la cita y del cliente
+            const cita = await citaModel.findById(idCita);
+            console.log("Datos de la cita obtenidos:", cita); // Registro para verificar los datos de la cita
 
-        if (cita.length > 0) {
-            const cliente = await citaModel.obtenerDatosCliente(cita[0].idClienteFK);
-            console.log("Datos del cliente obtenidos:", cliente); // Registro para verificar los datos del cliente
+            if (cita.length > 0) {
+                const cliente = await citaModel.obtenerDatosCliente(cita[0].idClienteFK);
+                console.log("Datos del cliente obtenidos:", cliente); // Registro para verificar los datos del cliente
 
-            if (cliente && cliente.emailCliente) {
-                const { emailCliente, nombreCliente, aPCliente, aMCliente } = cliente;
-                const clienteNombre = `${nombreCliente} ${aPCliente} ${aMCliente}`;
-                const motivoCita = cita[0].motivo;
-                const fechaCitaRaw = cita[0].fechaCita;
+                if (cliente && cliente.emailCliente) {
+                    const { emailCliente, nombreCliente, aPCliente, aMCliente } = cliente;
+                    const clienteNombre = `${nombreCliente} ${aPCliente} ${aMCliente}`;
+                    const motivoCita = cita[0].motivo;
+                    const fechaCitaRaw = cita[0].fechaCita;
 
-                console.log("Fecha de la cita cruda:", fechaCitaRaw); // Registro para verificar la fecha sin procesar
+                    console.log("Fecha de la cita cruda:", fechaCitaRaw); // Registro para verificar la fecha sin procesar
 
-                if (fechaCitaRaw) {
-                    // Utilizando moment para formatear la fecha
-                    const fechaCitaObj = moment(fechaCitaRaw);
-                    if (fechaCitaObj.isValid()) {
-                        const fecha = fechaCitaObj.format('DD-MM-YYYY');
-                        const hora = fechaCitaObj.format('HH:mm');
+                    if (fechaCitaRaw) {
+                        // Utilizando moment para formatear la fecha
+                        const fechaCitaObj = moment(fechaCitaRaw);
+                        if (fechaCitaObj.isValid()) {
+                            const fecha = fechaCitaObj.format('DD-MM-YYYY');
+                            const hora = fechaCitaObj.format('HH:mm');
 
-                        console.log("Fecha formateada:", fecha, "Hora formateada:", hora); // Registro para verificar la fecha y hora procesadas
+                            console.log("Fecha formateada:", fecha, "Hora formateada:", hora); // Registro para verificar la fecha y hora procesadas
 
-                        // Construir el contenido del correo con la nueva estructura
-                        const asunto = 'Cancelación de Cita';
-                        const contenido = `
-                            <p>Estimado ${clienteNombre},</p>
-                            <p>Lamentamos informarle que su cita ha sido cancelada. A continuación, le proporcionamos los detalles de la cita:</p>
-                            <ul>
-                                <li><strong>Motivo:</strong> ${motivoCita}</li>
-                                <li><strong>Fecha:</strong> ${fecha}</li>
-                                <li><strong>Hora:</strong> ${hora}</li>
-                            </ul>
-                            <p>Si necesita reprogramar la cita, no dude en ponerse en contacto con nosotros.</p>
-                            <p>Gracias por su comprensión,<br>Equipo Legal.</p>
-                        `;
+                            // Construir el contenido del correo con la nueva estructura
+                            const asunto = 'Cancelación de Cita';
+                            const contenido = `
+                                <p>Estimado ${clienteNombre},</p>
+                                <p>Lamentamos informarle que su cita ha sido cancelada. A continuación, le proporcionamos los detalles de la cita:</p>
+                                <ul>
+                                    <li><strong>Motivo:</strong> ${motivoCita}</li>
+                                    <li><strong>Fecha:</strong> ${fecha}</li>
+                                    <li><strong>Hora:</strong> ${hora}</li>
+                                </ul>
+                                <p>Si necesita reprogramar la cita, no dude en ponerse en contacto con nosotros.</p>
+                                <p>Gracias por su comprensión,<br>Equipo Legal.</p>
+                            `;
 
-                        // Enviar correo de notificación
-                        await enviarCorreo(emailCliente, asunto, contenido);
-                        console.log("Correo enviado exitosamente a:", emailCliente); // Registro para confirmar que el correo se ha enviado
+                            // Enviar correo de notificación
+                            await enviarCorreo(emailCliente, asunto, contenido);
+                            console.log("Correo enviado exitosamente a:", emailCliente); // Registro para confirmar que el correo se ha enviado
+                        } else {
+                            console.error('Error: La fecha de la cita no es válida.');
+                        }
                     } else {
-                        console.error('Error: La fecha de la cita no es válida.');
+                        console.error('Error: No se encontró la fecha de la cita.');
                     }
                 } else {
-                    console.error('Error: No se encontró la fecha de la cita.');
+                    console.error('No se encontró un correo electrónico válido para el cliente.');
                 }
             } else {
-                console.error('No se encontró un correo electrónico válido para el cliente.');
+                console.error('No se encontró información de la cita.');
             }
-        } else {
-            console.error('No se encontró información de la cita.');
+
+            res.json(result); // Responde con el resultado de la operación
+        } catch (error) {
+            console.error('Error al cancelar la cita:', error);
+            res.status(500).json({ message: 'Error al cancelar la cita' });
         }
-
-        res.json(result); // Responde con el resultado de la operación
-    } catch (error) {
-        console.error('Error al cancelar la cita:', error);
-        res.status(500).json({ message: 'Error al cancelar la cita' });
     }
-}
 
+    //Método para completar cita
+    async completarCita(req: Request, res: Response) {
+        try {
+            const { idCita } = req.body;
+    
+            if (!idCita) {
+                return res.status(400).json({ message: 'ID de cita no proporcionado' });
+            }
+    
+            // Llama al modelo para actualizar el estado de la cita a "completada"
+            await citaModel.completarCita(Number(idCita));
+    
+            // Obtén información de la cita actualizada
+            const cita = await citaModel.findById(idCita);
+    
+            if (!cita) {
+                return res.status(404).json({ message: 'No se encontró la cita' });
+            }
+    
+            res.json({ message: 'Cita completada exitosamente' });
+        } catch (error) {
+            console.error('Error al completar la cita:', error);
+            res.status(500).json({ message: 'Error al completar la cita' });
+        }
+    }
+    
   
  
     async getCitasByCliente(req: Request, res: Response) {
@@ -237,8 +262,7 @@ async cancelarCita(req: Request, res: Response) {
     }
 
 
-    // Obtener servicios de un cliente
-     // Método para obtener los servicios asociados a las citas de un cliente
+    // Método para obtener los servicios asociados a las citas de un cliente
      async getServiciosPorCitasDeCliente(req: Request, res: Response) {
         try {
             const { idCliente } = req.params;
