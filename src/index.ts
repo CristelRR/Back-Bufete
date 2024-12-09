@@ -15,6 +15,8 @@ import registerRoutes from './routes/register-routes';
 import expedienteRoutes from './routes/upload-file-routes';
 import pagoRoutes from './routes/gestionPago-route';
 import expedienteNRoutes from './routes/expediente-route';
+import notaRoutes from './routes/nota-route'; 
+
 
 class Server {
     public app: Application;
@@ -61,6 +63,7 @@ class Server {
         this.app.use('/pagos', pagoRoutes);
         this.app.use('/expedientes', expedienteRoutes);
         this.app.use('/expedienteN', expedienteNRoutes);
+        this.app.use('/notas', notaRoutes); 
 
     }
 
