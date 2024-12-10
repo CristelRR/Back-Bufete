@@ -17,11 +17,12 @@ class CitaRoutes {
         this.router.post('/crear-cita', cita_controller_1.citaController.crearCitaConTransaccion);
         this.router.get('/consultar-citaC/:idCliente', cita_controller_1.citaController.getCitasByCliente);
         this.router.get('/consultar-citaA/:idAbogado', cita_controller_1.citaController.getCitasByAbogado);
+        this.router.get('/consultar-citaS/', cita_controller_1.citaController.getCitasBySecretaria);
         this.router.get('/clientes/abogado/:idAbogado', cita_controller_1.citaController.getClientesPorAbogado);
         this.router.put('/cancelar', cita_controller_1.citaController.cancelarCita);
         this.router.get('/clientes/:idCliente/servicios', cita_controller_1.citaController.getServiciosPorCitasDeCliente);
         this.router.get("/detalladas", cita_controller_1.citaController.getAllCitas);
-        this.router.put('/completar-cita', cita_controller_1.citaController.completarCita);
+        this.router.put('/completar-cita/:idCita', cita_controller_1.citaController.completarCita);
         this.router.get('/expediente/:numeroExpediente', cita_controller_1.citaController.getCitasCompletadasByExpediente);
     }
 }
