@@ -208,17 +208,11 @@ class CitaController {
     completarCita(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { idCita } = req.body;
+                const { idCita } = req.params; // Asegúrate de usar req.params
                 if (!idCita) {
                     return res.status(400).json({ message: 'ID de cita no proporcionado' });
                 }
-                // Llama al modelo para actualizar el estado de la cita a "completada"
                 yield cita_model_1.default.completarCita(Number(idCita));
-                // Obtén información de la cita actualizada
-                const cita = yield cita_model_1.default.findById(idCita);
-                if (!cita) {
-                    return res.status(404).json({ message: 'No se encontró la cita' });
-                }
                 res.json({ message: 'Cita completada exitosamente' });
             }
             catch (error) {
@@ -251,6 +245,20 @@ class CitaController {
             catch (error) {
                 console.error('Error al obtener citas del abogado:', error);
                 res.status(500).json({ message: 'Error al obtener citas del abogado' });
+            }
+        });
+    }
+    // Método para obtener las citas de un abogado específico
+    getCitasBySecretaria(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                // Llama al modelo para obtener todas las citas (en el caso de secretaría)
+                const citas = yield cita_model_1.default.getAllCitas(); // Asegúrate de que el método esté implementado en el modelo
+                res.json(citas); // Devuelve las citas como respuesta
+            }
+            catch (error) {
+                console.error('Error al obtener las citas:', error);
+                res.status(500).json({ message: 'Error al obtener las citas' });
             }
         });
     }

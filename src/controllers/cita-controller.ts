@@ -201,29 +201,20 @@ class CitaController {
     //Método para completar cita
     async completarCita(req: Request, res: Response) {
         try {
-            const { idCita } = req.body;
-    
-            if (!idCita) {
-                return res.status(400).json({ message: 'ID de cita no proporcionado' });
-            }
-    
-            // Llama al modelo para actualizar el estado de la cita a "completada"
-            await citaModel.completarCita(Number(idCita));
-    
-            // Obtén información de la cita actualizada
-            const cita = await citaModel.findById(idCita);
-    
-            if (!cita) {
-                return res.status(404).json({ message: 'No se encontró la cita' });
-            }
-    
-            res.json({ message: 'Cita completada exitosamente' });
+          const { idCita } = req.params; // Asegúrate de usar req.params
+      
+          if (!idCita) {
+            return res.status(400).json({ message: 'ID de cita no proporcionado' });
+          }
+      
+          await citaModel.completarCita(Number(idCita));
+          res.json({ message: 'Cita completada exitosamente' });
         } catch (error) {
-            console.error('Error al completar la cita:', error);
-            res.status(500).json({ message: 'Error al completar la cita' });
+          console.error('Error al completar la cita:', error);
+          res.status(500).json({ message: 'Error al completar la cita' });
         }
-    }
-    
+      }
+      
   
  
     async getCitasByCliente(req: Request, res: Response) {
@@ -248,6 +239,19 @@ class CitaController {
             res.status(500).json({ message: 'Error al obtener citas del abogado' });
         }
     }
+
+    // Método para obtener las citas de un abogado específico
+    async getCitasBySecretaria(req: Request, res: Response) {
+        try {
+            // Llama al modelo para obtener todas las citas (en el caso de secretaría)
+            const citas = await citaModel.getAllCitas();  // Asegúrate de que el método esté implementado en el modelo
+            res.json(citas);  // Devuelve las citas como respuesta
+        } catch (error) {
+            console.error('Error al obtener las citas:', error);
+            res.status(500).json({ message: 'Error al obtener las citas' });
+        }
+    }
+
 
     // Método para obtener los clientes únicos con citas programadas para un abogado específico
     async getClientesPorAbogado(req: Request, res: Response) {

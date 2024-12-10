@@ -15,6 +15,8 @@ import registerRoutes from './routes/register-routes';
 import expedienteRoutes from './routes/upload-file-routes';
 import pagoRoutes from './routes/gestionPago-route';
 import expedienteNRoutes from './routes/expediente-route';
+import notaRoutes from './routes/nota-route'; 
+
 import cargarDocumentosRoute from './routes/cargarDocumentos-route';
 import citasExpedientesRoutes from './routes/citas-expedientes-routes';
 
@@ -63,6 +65,8 @@ class Server {
         this.app.use('/pagos', pagoRoutes);
         this.app.use('/expedientes', expedienteRoutes);
         this.app.use('/expedienteN', expedienteNRoutes);
+        this.app.use('/notas', notaRoutes); 
+
         this.app.use('/documentos', cargarDocumentosRoute);
         this.app.use('/citasExpediente', citasExpedientesRoutes); 
     }

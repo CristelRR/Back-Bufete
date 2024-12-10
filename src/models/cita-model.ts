@@ -263,6 +263,43 @@ class CitaModel {
         return result.recordset;
     }
 
+    // Método para obtener las citas de un abogado específico
+    async getCitasBySecretaria() {
+        const pool = await connectDB();
+        const result = await pool.request()
+            .query(`
+                SELECT 
+                    C.idCita,
+                    C.motivo,
+                    C.estado AS estadoCita,
+                    CL.nombreCliente,
+                    CL.aPCliente,
+                    CL.aMCliente,
+                    A.fecha AS fechaCita,
+                    A.horaInicio,
+                    A.horaFinal,
+                    E.nombreEmpleado AS abogadoNombre,
+                    E.aPEmpleado AS abogadoApellidoPaterno,
+                    E.aMEmpleado AS abogadoApellidoMaterno,
+                    S.nombreServicio,
+                    S.descripcion AS descripcionServicio,
+                    S.costo AS costoServicio,
+                    C.idServicioFK
+                FROM 
+                    tblCita C
+                JOIN 
+                    tblCliente CL ON C.idClienteFK = CL.idCliente
+                JOIN 
+                    tblAgenda A ON C.idAgendaFK = A.idAgenda
+                JOIN 
+                    tblEmpleado E ON A.idEmpleadoFK = E.idEmpleado
+                JOIN 
+                    tblServicio S ON C.idServicioFK = S.idServicio
+            `);
+
+        return result.recordset;
+    }
+
     // Método para obtener las clientes que tienen cita programada de un abogado específico
     async getClientesPorAbogado(idAbogado: number) {
         const pool = await connectDB();
@@ -287,6 +324,32 @@ class CitaModel {
             `);
         return result.recordset;
     }
+
+    // Método para obtener las clientes que tienen cita programada de un abogado específico
+    async getClientesPorSecretaria() {
+        const pool = await connectDB();
+        const result = await pool.request()
+            .query(`
+                SELECT DISTINCT 
+                    CL.nombreCliente, 
+                    CL.aPCliente, 
+                    CL.aMCliente,
+					E.nombreEmpleado,
+					E.aPEmpleado,
+					E.aMEmpleado
+                FROM 
+                    tblCita C
+                JOIN 
+                    tblCliente CL ON C.idClienteFK = CL.idCliente
+                JOIN 
+                    tblAgenda A ON C.idAgendaFK = A.idAgenda
+                JOIN 
+                    tblEmpleado E ON A.idEmpleadoFK = E.idEmpleado
+                WHERE 
+                     C.estado = 'programada';
+            `);
+        return result.recordset;
+    } 
     
     // Método para canelar cita
     async cancelarCita(idCita: number) {
@@ -332,9 +395,8 @@ class CitaModel {
     // Método para completar cita
     async completarCita(idCita: number) {
         const pool = await connectDB();
-    
         try {
-            await pool.request()
+            const result = await pool.request()
                 .input('idCita', idCita)
                 .query(`
                     UPDATE tblCita
@@ -342,14 +404,18 @@ class CitaModel {
                     WHERE idCita = @idCita
                 `);
     
+            if (result.rowsAffected[0] === 0) {
+                throw new Error('No se encontró una cita con el ID proporcionado.');
+            }
+    
             return { message: 'Estado de la cita actualizado a completada' };
         } catch (error: any) {
             console.error('Error al actualizar la cita:', error);
             throw new Error('Error al actualizar el estado de la cita: ' + error.message);
         }
-    }   
+    }
+       
     
-
     // Método para obtener los servicios únicos asociados al cliente a través de sus citas
     async getServiciosPorCitasDeCliente(idCliente: number) {
         const pool = await connectDB();

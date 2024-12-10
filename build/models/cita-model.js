@@ -275,6 +275,43 @@ class CitaModel {
             return result.recordset;
         });
     }
+    // Método para obtener las citas de un abogado específico
+    getCitasBySecretaria() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .query(`
+                SELECT 
+                    C.idCita,
+                    C.motivo,
+                    C.estado AS estadoCita,
+                    CL.nombreCliente,
+                    CL.aPCliente,
+                    CL.aMCliente,
+                    A.fecha AS fechaCita,
+                    A.horaInicio,
+                    A.horaFinal,
+                    E.nombreEmpleado AS abogadoNombre,
+                    E.aPEmpleado AS abogadoApellidoPaterno,
+                    E.aMEmpleado AS abogadoApellidoMaterno,
+                    S.nombreServicio,
+                    S.descripcion AS descripcionServicio,
+                    S.costo AS costoServicio,
+                    C.idServicioFK
+                FROM 
+                    tblCita C
+                JOIN 
+                    tblCliente CL ON C.idClienteFK = CL.idCliente
+                JOIN 
+                    tblAgenda A ON C.idAgendaFK = A.idAgenda
+                JOIN 
+                    tblEmpleado E ON A.idEmpleadoFK = E.idEmpleado
+                JOIN 
+                    tblServicio S ON C.idServicioFK = S.idServicio
+            `);
+            return result.recordset;
+        });
+    }
     // Método para obtener las clientes que tienen cita programada de un abogado específico
     getClientesPorAbogado(idAbogado) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -297,6 +334,33 @@ class CitaModel {
                 WHERE 
                     E.idEmpleado = @idAbogado 
                     AND C.estado = 'programada';
+            `);
+            return result.recordset;
+        });
+    }
+    // Método para obtener las clientes que tienen cita programada de un abogado específico
+    getClientesPorSecretaria() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .query(`
+                SELECT DISTINCT 
+                    CL.nombreCliente, 
+                    CL.aPCliente, 
+                    CL.aMCliente,
+					E.nombreEmpleado,
+					E.aPEmpleado,
+					E.aMEmpleado
+                FROM 
+                    tblCita C
+                JOIN 
+                    tblCliente CL ON C.idClienteFK = CL.idCliente
+                JOIN 
+                    tblAgenda A ON C.idAgendaFK = A.idAgenda
+                JOIN 
+                    tblEmpleado E ON A.idEmpleadoFK = E.idEmpleado
+                WHERE 
+                     C.estado = 'programada';
             `);
             return result.recordset;
         });
@@ -345,13 +409,16 @@ class CitaModel {
         return __awaiter(this, void 0, void 0, function* () {
             const pool = yield (0, db_1.connectDB)();
             try {
-                yield pool.request()
+                const result = yield pool.request()
                     .input('idCita', idCita)
                     .query(`
                     UPDATE tblCita
                     SET estado = 'completada'
                     WHERE idCita = @idCita
                 `);
+                if (result.rowsAffected[0] === 0) {
+                    throw new Error('No se encontró una cita con el ID proporcionado.');
+                }
                 return { message: 'Estado de la cita actualizado a completada' };
             }
             catch (error) {
