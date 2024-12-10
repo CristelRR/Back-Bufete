@@ -307,11 +307,11 @@ class CitaController {
     getCitasCompletadasByExpediente(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { numeroExpediente } = req.params; // Obtener el número de expediente desde los parámetros
-                if (!numeroExpediente) {
+                const { idExpediente } = req.params; // Obtener el número de expediente desde los parámetros
+                if (!idExpediente) {
                     return res.status(400).json({ message: 'Número de expediente no proporcionado' });
                 }
-                const citas = yield cita_model_1.default.getCitasCompletadasByExpediente(numeroExpediente);
+                const citas = yield cita_model_1.default.getCitasCompletadasByExpediente(idExpediente);
                 res.json(citas); // Responder con las citas completadas
             }
             catch (error) {
