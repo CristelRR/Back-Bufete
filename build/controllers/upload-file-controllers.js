@@ -14,6 +14,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.expedienteController = void 0;
 const db_1 = require("../config/db");
+const { PDFDocument } = require('pdf-lib'); // Librería para manipular PDFs
+const sql = require('mssql'); // Librería para conectarse a SQL Server
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const uploadDir = path_1.default.join(__dirname, '../uploads');
@@ -36,7 +38,7 @@ class ExpedienteController {
                     expedienteQuery += ` AND e.idExpediente = @idExpediente`;
                 }
                 if (year) {
-                    expedienteQuery += ` AND YEAR(e.fechaCreacion) = @year`;
+                    expedienteQuery += ` AND YEAR(e.anioExpediente) = @year`;
                 }
                 if (numeroExpediente) {
                     expedienteQuery += ` AND e.numeroExpediente = @numeroExpediente`;
@@ -117,93 +119,102 @@ class ExpedienteController {
         });
     }
     obtenerExpedientes(req, res) {
-        (0, db_1.connectDB)()
-            .then(pool => {
-            const query = `
-                    SELECT 
-                        e.idExpediente,
-                        e.numeroExpediente,
-                        e.fechaCreacion,
-                        e.estado,
-                        e.descripcion,
-                        e.nombreExpediente,
-                        d.documentoBase64,
-                        d.fechaSubida,
-                        d.estado AS estadoDocumento,
-                        d.idTipoDocumentoFK,
-                        td.tipoDocumento
-                    FROM 
-                        tblExpediente e
-                    LEFT JOIN 
-                        tblDocumentosExpediente d ON e.idExpediente = d.idExpedienteFK
-                    LEFT JOIN
-                        tblTipoDocumento td ON d.idTipoDocumentoFK = td.idTipoDocumento;
-                `;
-            return pool.request().query(query);
-        })
-            .then(result => {
-            // Agrupamos los documentos por expediente
-            const expedientesMap = new Map();
-            result.recordset.forEach((row) => {
-                const expedienteId = row.idExpediente;
-                // Verificamos si el expediente ya existe en el mapa
-                if (!expedientesMap.has(expedienteId)) {
-                    expedientesMap.set(expedienteId, {
-                        idExpediente: row.idExpediente,
-                        numeroExpediente: row.numeroExpediente,
-                        fechaCreacion: row.fechaCreacion,
-                        estado: row.estado,
-                        descripcion: row.descripcion,
-                        nombreExpediente: row.nombreExpediente,
-                        documentos: []
-                    });
-                }
-                // Agregamos el documento si existe en el registro
-                if (row.documentoBase64) {
-                    expedientesMap.get(expedienteId).documentos.push({
-                        documentoBase64: row.documentoBase64,
-                        fechaSubida: row.fechaSubida,
-                        estadoDocumento: row.estadoDocumento,
-                        tipoDocumento: row.tipoDocumento
-                    });
-                }
-            });
-            // Convertimos el mapa en un arreglo de expedientes
-            const expedientes = Array.from(expedientesMap.values());
-            res.status(200).json(expedientes);
-        })
-            .catch(error => {
-            console.error('Error al obtener los expedientes:', error);
-            res.status(500).json({ error: 'Error al obtener los expedientes' });
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const pool = yield (0, db_1.connectDB)();
+                // Consulta SQL para obtener expedientes con sus documentos
+                const query = `
+                SELECT 
+                    e.idExpediente,
+                    e.numeroExpediente,
+                    e.fechaCreacion,
+                    e.estado AS estadoExpediente,
+                    e.descripcion,
+                    e.nombreExpediente,
+                    e.datosAbogado,
+                    e.datosCliente,
+                    d.idDocumento,
+                    d.documentoBase64,
+                    d.fechaSubida,
+                    d.estado AS estadoDocumento,
+                    td.tipoDocumento
+                FROM 
+                    tblExpediente e
+                LEFT JOIN 
+                    tblDocumentosExpediente d ON e.idExpediente = d.idExpedienteFK
+                LEFT JOIN 
+                    tblTipoDocumento td ON d.idTipoDocumentoFK = td.idTipoDocumento
+                ORDER BY 
+                    CASE 
+                        WHEN e.estado = 'Prioridad Alta' THEN 1
+                        WHEN e.estado = 'Archivado' THEN 2
+                        ELSE 3
+                    END;
+            `;
+                const result = yield pool.request().query(query);
+                // Mapeamos los expedientes y sus documentos
+                const expedientesMap = new Map();
+                result.recordset.forEach((row) => {
+                    const expedienteId = row.idExpediente;
+                    if (!expedientesMap.has(expedienteId)) {
+                        expedientesMap.set(expedienteId, {
+                            idExpediente: row.idExpediente,
+                            numeroExpediente: row.numeroExpediente,
+                            fechaCreacion: row.fechaCreacion,
+                            estado: row.estadoExpediente,
+                            descripcion: row.descripcion,
+                            nombreExpediente: row.nombreExpediente,
+                            datosAbogado: row.datosAbogado,
+                            datosCliente: row.datosCliente,
+                            documentos: []
+                        });
+                    }
+                    if (row.idDocumento) {
+                        expedientesMap.get(expedienteId).documentos.push({
+                            idDocumento: row.idDocumento,
+                            documentoBase64: row.documentoBase64,
+                            fechaSubida: row.fechaSubida,
+                            estado: row.estadoDocumento,
+                            tipoDocumento: row.tipoDocumento
+                        });
+                    }
+                });
+                // Convertimos el mapa en un arreglo de expedientes
+                const expedientes = Array.from(expedientesMap.values());
+                res.status(200).json(expedientes);
+            }
+            catch (error) {
+                console.error('Error al obtener los expedientes:', error);
+                res.status(500).json({ error: 'Error al obtener los expedientes' });
+            }
         });
     }
     insertarDocumentos(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const expedienteId = req.body.idExpedienteFK;
-                const tipoDocumento = req.body.idTipoDocumentoFK;
-                const documentos = req.files; // Array de archivos
-                if (!expedienteId || !tipoDocumento || documentos.length === 0) {
-                    return res.status(400).json({ error: 'Expediente ID, tipo de documento y archivos son requeridos' });
+                const documentos = req.body.documentos; // Arreglo de documentos en JSON
+                if (!expedienteId || !documentos || documentos.length === 0) {
+                    return res.status(400).json({ error: 'ID de expediente y documentos son requeridos' });
                 }
+                const pool = yield (0, db_1.connectDB)();
                 const errores = [];
-                for (const documento of documentos) {
-                    const { path: filePath, mimetype, size } = documento;
+                for (const doc of documentos) {
+                    const { documentoBase64, idTipoDocumentoFK } = doc;
                     // Validaciones
-                    if (size > 10 * 1024 * 1024) { // Limitar tamaño de archivo a 10MB
-                        errores.push(`El archivo ${documento.originalname} es demasiado grande.`);
+                    if (!documentoBase64 || !idTipoDocumentoFK) {
+                        errores.push('Cada documento debe incluir Base64 y un ID de tipo de documento.');
                         continue;
                     }
-                    if (!['application/pdf'].includes(mimetype)) {
-                        errores.push(`El archivo ${documento.originalname} no es un PDF válido.`);
-                        continue;
-                    }
-                    // Lee el archivo como Base64
-                    const documentoBase64 = fs_1.default.readFileSync(filePath, { encoding: 'base64' });
                     // Inserción en la base de datos
-                    yield expedienteService.insertarDocumento(expedienteId, documentoBase64, documento.originalname);
-                    // Elimina el archivo después de cargarlo
-                    fs_1.default.unlinkSync(filePath);
+                    yield pool.request()
+                        .input('idExpedienteFK', expedienteId)
+                        .input('idTipoDocumentoFK', idTipoDocumentoFK)
+                        .input('documentoBase64', documentoBase64)
+                        .query(`
+                        INSERT INTO tblDocumentosExpediente (idExpedienteFK, idTipoDocumentoFK, documentoBase64, fechaSubida, estado)
+                        VALUES (@idExpedienteFK, @idTipoDocumentoFK, @documentoBase64, GETDATE(), 'Pendiente');
+                    `);
                 }
                 if (errores.length > 0) {
                     return res.status(400).json({ errors: errores });
@@ -220,28 +231,64 @@ class ExpedienteController {
     crearExpediente(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { numeroExpediente, estado, descripcion, nombreExpediente, idClienteFK, idEmpleadoFK } = req.body;
-                if (!numeroExpediente || !estado || !idClienteFK) {
+                const { estado, nombreServicio, datosAbogado, descripcion, datosCliente, fechaApertura, idClienteFK, idEmpleadoFK, } = req.body;
+                if (!estado || !idClienteFK || !nombreServicio) {
                     return res.status(400).json({ error: 'Faltan campos obligatorios' });
                 }
+                if (typeof datosAbogado !== 'object' || typeof datosCliente !== 'object') {
+                    return res.status(400).json({ error: 'Los datos de abogado y cliente deben ser objetos válidos.' });
+                }
                 const pool = yield (0, db_1.connectDB)();
+                const clienteExistente = yield pool.request()
+                    .input('idCliente', idClienteFK)
+                    .query('SELECT idCliente, nombreCliente, aPCliente, aMCliente FROM tblCliente WHERE idCliente = @idCliente');
+                if (clienteExistente.recordset.length === 0) {
+                    return res.status(404).json({ error: 'El cliente especificado no existe' });
+                }
+                const { nombreCliente, aPCliente, aMCliente } = clienteExistente.recordset[0];
+                const numeroExpediente = `EXP${nombreCliente.charAt(0)}${aPCliente.charAt(0)}${aMCliente.charAt(0)}${Math.floor(Math.random() * 10000)}`;
+                const nombreExpediente = `Cliente: ${nombreCliente} ${aPCliente} ${aMCliente}`;
+                const expedienteExistente = yield pool.request()
+                    .input('numeroExpediente', numeroExpediente)
+                    .query('SELECT numeroExpediente FROM tblExpediente WHERE numeroExpediente = @numeroExpediente');
+                if (expedienteExistente.recordset.length > 0) {
+                    return res.status(409).json({ error: 'El número de expediente generado ya existe. Intenta nuevamente.' });
+                }
+                if (idEmpleadoFK) {
+                    const empleadoExistente = yield pool.request()
+                        .input('idEmpleado', idEmpleadoFK)
+                        .query('SELECT idEmpleado FROM tblEmpleado WHERE idEmpleado = @idEmpleado');
+                    if (empleadoExistente.recordset.length === 0) {
+                        return res.status(404).json({ error: 'El empleado especificado no existe' });
+                    }
+                }
                 const transaction = pool.transaction();
                 yield transaction.begin();
                 try {
-                    // Crear el expediente
                     const result = yield transaction.request()
+                        .input('nombreExpediente', nombreExpediente)
                         .input('numeroExpediente', numeroExpediente)
                         .input('estado', estado)
-                        .input('descripcion', descripcion || '')
-                        .input('nombreExpediente', nombreExpediente || 'Nombre por Defecto')
+                        .input('descripcion', descripcion)
+                        .input('nombreServicio', nombreServicio)
+                        .input('datosAbogado', JSON.stringify(datosAbogado))
+                        .input('datosCliente', JSON.stringify(datosCliente))
+                        .input('fechaApertura', fechaApertura ? new Date(fechaApertura) : new Date())
                         .input('idClienteFK', idClienteFK)
                         .input('idEmpleadoFK', idEmpleadoFK || null)
                         .query(`
-                        INSERT INTO tblExpediente (numeroExpediente, estado, descripcion, nombreExpediente, idClienteFK, idEmpleadoFK)
-                        VALUES (@numeroExpediente, @estado, @descripcion, @nombreExpediente, @idClienteFK, @idEmpleadoFK);
+                        INSERT INTO tblExpediente (
+                            nombreExpediente, numeroExpediente, estado, descripcion,
+                            nombreServicio, datosAbogado, datosCliente,
+                            fechaApertura, idClienteFK, idEmpleadoFK
+                        )
+                        VALUES (
+                            @nombreExpediente, @numeroExpediente, @estado, @descripcion,
+                            @nombreServicio, @datosAbogado, @datosCliente,
+                            @fechaApertura, @idClienteFK, @idEmpleadoFK
+                        );
                         SELECT SCOPE_IDENTITY() AS idExpediente;
                     `);
-                    // Obtener el idExpediente recién creado
                     const idExpediente = Number(result.recordset[0].idExpediente);
                     yield transaction.commit();
                     return res.status(200).json({ message: 'Expediente creado correctamente', idExpediente });
@@ -253,8 +300,14 @@ class ExpedienteController {
                 }
             }
             catch (error) {
-                console.error('Error al conectar a la base de datos:', error);
-                return res.status(500).json({ error: 'Error al conectar a la base de datos' });
+                if (error instanceof Error) {
+                    console.error('Error al conectar a la base de datos:', error.message);
+                    return res.status(500).json({ error: 'Error al conectar a la base de datos', detalles: error.message });
+                }
+                else {
+                    console.error('Error inesperado:', error);
+                    return res.status(500).json({ error: 'Error inesperado al conectar a la base de datos' });
+                }
             }
         });
     }

@@ -24,7 +24,7 @@ class CitaRoutes {
         this.router.get('/clientes/:idCliente/servicios', citaController.getServiciosPorCitasDeCliente);
         this.router.get("/detalladas", citaController.getAllCitas); 
         this.router.put('/completar-cita/:idCita', citaController.completarCita);
-        this.router.get('/expediente/:numeroExpediente', citaController.getCitasCompletadasByExpediente);
+        this.router.get('/expediente/:idExpediente', citaController.getCitasCompletadasByExpediente);
 
     }
 }

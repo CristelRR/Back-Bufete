@@ -23,7 +23,7 @@ class CitaRoutes {
         this.router.get('/clientes/:idCliente/servicios', cita_controller_1.citaController.getServiciosPorCitasDeCliente);
         this.router.get("/detalladas", cita_controller_1.citaController.getAllCitas);
         this.router.put('/completar-cita/:idCita', cita_controller_1.citaController.completarCita);
-        this.router.get('/expediente/:numeroExpediente', cita_controller_1.citaController.getCitasCompletadasByExpediente);
+        this.router.get('/expediente/:idExpediente', cita_controller_1.citaController.getCitasCompletadasByExpediente);
     }
 }
 const citaRoutes = new CitaRoutes();

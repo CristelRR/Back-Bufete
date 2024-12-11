@@ -2,6 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import { expedienteController } from "../controllers/upload-file-controllers";
 
+
 class ExpedienteRoutes {
     public router: Router = Router();
     private upload = multer({ dest: 'uploads/' });
@@ -12,7 +13,7 @@ class ExpedienteRoutes {
 
     config(): void {
         this.router.post('/', expedienteController.crearExpediente);
-        this.router.post('/subirDocumento', expedienteController.insertarDocumentos);
+        this.router.post('/subirDocumento1', expedienteController.insertarDocumentos);
         this.router.get('/historial-expedientes', expedienteController.obtenerHistorialExpedientes);
         this.router.get('/', expedienteController.obtenerExpedientes);
         this.router.get('/documento/:idDocumento', expedienteController.obtenerDocumento);

@@ -87,11 +87,11 @@ class ExpedienteNController {
     informacionGeneral(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { numeroExpediente } = req.params; // Obtener el número de expediente de los parámetros de la URL
-                if (!numeroExpediente) {
+                const { idExpediente } = req.params; // Obtener el número de expediente de los parámetros de la URL
+                if (!idExpediente) {
                     return res.status(400).json({ message: "El número de expediente es requerido" });
                 }
-                const expediente = yield expediente_model_1.default.informacionGeneral(numeroExpediente);
+                const expediente = yield expediente_model_1.default.informacionGeneral(idExpediente);
                 if (!expediente) {
                     return res.status(404).json({ message: "Expediente no encontrado" });
                 }
@@ -106,11 +106,11 @@ class ExpedienteNController {
     obtenerPartes(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { numeroExpediente } = req.params; // Obtener número de expediente desde los parámetros
-                if (!numeroExpediente) {
+                const { idExpediente } = req.params; // Obtener número de expediente desde los parámetros
+                if (!idExpediente) {
                     return res.status(400).json({ message: 'El número de expediente es requerido.' });
                 }
-                const partes = yield expediente_model_1.default.getPartesPorExpediente(numeroExpediente);
+                const partes = yield expediente_model_1.default.getPartesPorExpediente(idExpediente);
                 if (!partes || partes.length === 0) {
                     return res.status(404).json({ message: 'No se encontraron partes relacionadas con este expediente.' });
                 }
@@ -118,6 +118,35 @@ class ExpedienteNController {
             }
             catch (error) {
                 console.error('Error al obtener las partes del expediente:', error);
+                res.status(500).json({ message: 'Error interno del servidor.' });
+            }
+        });
+    }
+    agregarParte(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { tipoParte, parteData } = req.body; // Recibe tipoParte y datos de la parte
+                if (!tipoParte || !parteData) {
+                    return res.status(400).json({ message: 'Tipo de parte y datos son requeridos.' });
+                }
+                let result;
+                switch (tipoParte) {
+                    case 'Demandante':
+                        result = yield expediente_model_1.default.agregarParteDemandante(parteData);
+                        break;
+                    case 'Demandado':
+                        result = yield expediente_model_1.default.agregarParteDemandada(parteData);
+                        break;
+                    case 'Tercero':
+                        result = yield expediente_model_1.default.agregarTerceroRelacionado(parteData);
+                        break;
+                    default:
+                        return res.status(400).json({ message: 'Tipo de parte no válido.' });
+                }
+                res.status(201).json({ message: 'Parte agregada exitosamente.', result });
+            }
+            catch (error) {
+                console.error('Error al agregar parte:', error);
                 res.status(500).json({ message: 'Error interno del servidor.' });
             }
         });

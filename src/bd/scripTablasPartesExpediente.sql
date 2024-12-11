@@ -19,14 +19,14 @@ DROP TABLE IF EXISTS tblExpediente;
 CREATE TABLE tblCategoriasDocumento (
     idCategoria INT IDENTITY(1,1) PRIMARY KEY,
     nombreCategoria NVARCHAR(100) NOT NULL UNIQUE,
-    descripcion NVARCHAR(255) NOT NULL -- Agregamos descripción para las categorías
+    descripcion NVARCHAR(255) NOT NULL -- Agregamos descripciï¿½n para las categorï¿½as
 );
 
 CREATE TABLE tblSubCategoriasDocumento (
     idSubCategoria INT IDENTITY(1,1) PRIMARY KEY,
     idCategoriaFK INT NOT NULL,
     nombreSubCategoria NVARCHAR(100) NOT NULL UNIQUE,
-    descripcion NVARCHAR(255) NOT NULL, -- Agregamos descripción para las subcategorías
+    descripcion NVARCHAR(255) NOT NULL, -- Agregamos descripciï¿½n para las subcategorï¿½as
     FOREIGN KEY (idCategoriaFK) REFERENCES tblCategoriasDocumento(idCategoria) ON DELETE CASCADE
 );
 
@@ -50,7 +50,7 @@ CREATE TABLE tblDocumentosExpediente (
     idExpedienteFK INT NOT NULL,
     idSubCategoriaFK INT NOT NULL,
     fechaSubida DATETIME NOT NULL DEFAULT GETDATE(),
-    estado VARCHAR(20) NOT NULL DEFAULT 'En Revisión' CHECK (estado IN ('En Revisión', 'Aprobado', 'Rechazado', 'Pendiente de Corrección')),
+    estado VARCHAR(20) NOT NULL DEFAULT 'En Revisiï¿½n' CHECK (estado IN ('En Revisiï¿½n', 'Aprobado', 'Rechazado', 'Pendiente de Correcciï¿½n')),
     documentoBase64 TEXT NOT NULL,
     FOREIGN KEY (idExpedienteFK) REFERENCES tblExpediente(idExpediente) ON DELETE CASCADE,
     FOREIGN KEY (idSubCategoriaFK) REFERENCES tblSubCategoriasDocumento(idSubCategoria)
@@ -77,7 +77,7 @@ CREATE TABLE tblHistorialDocumentosExpediente (
     idExpedienteHistorialFK INT NOT NULL,
     idSubCategoriaFK INT NOT NULL,
     fechaSubida DATETIME NOT NULL,
-    estado VARCHAR(20) NOT NULL CHECK (estado IN ('En Revisión', 'Aprobado', 'Rechazado', 'Pendiente de Corrección')),
+    estado VARCHAR(20) NOT NULL CHECK (estado IN ('En Revisiï¿½n', 'Aprobado', 'Rechazado', 'Pendiente de Correcciï¿½n')),
     documentoBase64 TEXT NOT NULL,
     responsable NVARCHAR(100),
     FOREIGN KEY (idExpedienteHistorialFK) REFERENCES tblHistorialExpediente(idHistorialExpediente),
@@ -181,11 +181,11 @@ INSERT INTO tblCategoriasDocumento (nombreCategoria, descripcion)
 VALUES 
     ('Contratos y Acuerdos Iniciales', 'Documentos relacionados con acuerdos iniciales y contratos legales'),
     ('Escritos Presentados', 'Documentos legales presentados ante tribunales u otras instancias'),
-    ('Pruebas Documentales', 'Documentos que actúan como pruebas en el caso'),
+    ('Pruebas Documentales', 'Documentos que actï¿½an como pruebas en el caso'),
     ('Resoluciones Judiciales y Notificaciones', 'Resoluciones oficiales emitidas por las autoridades'),
-    ('Peritajes y Declaraciones', 'Informes técnicos o declaraciones relevantes al caso'),
+    ('Peritajes y Declaraciones', 'Informes tï¿½cnicos o declaraciones relevantes al caso'),
     ('Evidencias Adicionales', 'Evidencias complementarias para apoyar el caso'),
-    ('Correspondencia Oficial', 'Comunicación oficial entre las partes o con el tribunal'),
+    ('Correspondencia Oficial', 'Comunicaciï¿½n oficial entre las partes o con el tribunal'),
     ('Referencias Legales', 'Material legal relacionado como leyes, reglamentos y jurisprudencias');
 
 SELECT * FROM tblCategoriasDocumento
@@ -194,8 +194,8 @@ SELECT * FROM tblCategoriasDocumento
 INSERT INTO tblSubCategoriasDocumento (idCategoriaFK, nombreSubCategoria, descripcion)
 VALUES 
     -- Contratos y Acuerdos Iniciales
-    (1, 'Contrato de prestación de servicios legales', 'Documento que formaliza el acuerdo de prestación de servicios'),
-    (1, 'Contrato de mediación o arbitraje', 'Acuerdo para resolver conflictos mediante mediación o arbitraje'),
+    (1, 'Contrato de prestaciï¿½n de servicios legales', 'Documento que formaliza el acuerdo de prestaciï¿½n de servicios'),
+    (1, 'Contrato de mediaciï¿½n o arbitraje', 'Acuerdo para resolver conflictos mediante mediaciï¿½n o arbitraje'),
     (1, 'Acuerdo de confidencialidad firmado por las partes', 'Documento que garantiza la confidencialidad del caso'),
     (1, 'Convenios previos entre las partes involucradas', 'Acuerdos preliminares antes de iniciar procedimientos legales'),
     (1, 'Poderes notariales otorgados al abogado o representantes legales', 'Poderes otorgados para representar a las partes legalmente'),
@@ -203,26 +203,26 @@ VALUES
 
     -- Escritos Presentados
     (2, 'Demanda inicial presentada en el juzgado', 'Primera demanda presentada por el demandante'),
-    (2, 'Contestación a la demanda por parte del demandado', 'Respuesta formal del demandado a la demanda'),
-    (2, 'Escritos de ampliación de demanda o reconvenciones', 'Documentos adicionales relacionados con la demanda'),
-    (2, 'Recursos de apelación, amparo, o nulidad', 'Recursos legales para cuestionar decisiones judiciales'),
+    (2, 'Contestaciï¿½n a la demanda por parte del demandado', 'Respuesta formal del demandado a la demanda'),
+    (2, 'Escritos de ampliaciï¿½n de demanda o reconvenciones', 'Documentos adicionales relacionados con la demanda'),
+    (2, 'Recursos de apelaciï¿½n, amparo, o nulidad', 'Recursos legales para cuestionar decisiones judiciales'),
     (2, 'Alegatos presentados por las partes', 'Argumentos legales presentados por las partes en el caso'),
-    (2, 'Escritos de desistimiento o acuerdos de resolución alternativa', 'Documentos relacionados con acuerdos para resolver el caso'),
-    (2, 'Solicitudes de prórrogas, aclaraciones o correcciones', 'Peticiones de tiempo adicional o ajustes en documentos'),
+    (2, 'Escritos de desistimiento o acuerdos de resoluciï¿½n alternativa', 'Documentos relacionados con acuerdos para resolver el caso'),
+    (2, 'Solicitudes de prï¿½rrogas, aclaraciones o correcciones', 'Peticiones de tiempo adicional o ajustes en documentos'),
 
     -- Pruebas Documentales
     (3, 'Contratos relacionados con el caso', 'Documentos contractuales relacionados con el caso'),
     (3, 'Actas notariales, de asamblea o constitutivas', 'Actas oficiales que respaldan el caso'),
-    (3, 'Escrituras públicas de bienes inmuebles', 'Documentos que prueban la propiedad de bienes inmuebles'),
-    (3, 'Correspondencia relevante', 'Cartas, mensajes o correos electrónicos relevantes'),
+    (3, 'Escrituras pï¿½blicas de bienes inmuebles', 'Documentos que prueban la propiedad de bienes inmuebles'),
+    (3, 'Correspondencia relevante', 'Cartas, mensajes o correos electrï¿½nicos relevantes'),
     (3, 'Facturas, recibos, comprobantes de pago', 'Pruebas financieras relacionadas con el caso'),
     (3, 'Registros financieros o contables', 'Documentos financieros relevantes al caso'),
-    (3, 'Actas de matrimonio, nacimiento o defunción', 'Actas civiles relevantes al caso'),
+    (3, 'Actas de matrimonio, nacimiento o defunciï¿½n', 'Actas civiles relevantes al caso'),
     (3, 'Informes o reportes administrativos', 'Informes que apoyan el caso'),
     (3, 'Declaraciones juradas de las partes', 'Declaraciones bajo juramento presentadas por las partes'),
 
     -- Resoluciones Judiciales y Notificaciones
-    (4, 'Autos iniciales del juzgado', 'Primera resolución oficial emitida por el juzgado'),
+    (4, 'Autos iniciales del juzgado', 'Primera resoluciï¿½n oficial emitida por el juzgado'),
     (4, 'Sentencias interlocutorias y definitivas', 'Decisiones judiciales sobre el caso'),
     (4, 'Notificaciones oficiales enviadas o recibidas por las partes', 'Notificaciones emitidas por el tribunal'),
     (4, 'Acuerdos emitidos por el juzgado', 'Acuerdos ordenados por el tribunal'),
@@ -230,28 +230,28 @@ VALUES
     (4, 'Resoluciones sobre incidentes procesales', 'Decisiones relacionadas con incidentes procesales'),
 
     -- Peritajes y Declaraciones
-    (5, 'Informes periciales en diversas áreas', 'Informes técnicos que apoyan el caso'),
+    (5, 'Informes periciales en diversas ï¿½reas', 'Informes tï¿½cnicos que apoyan el caso'),
     (5, 'Declaraciones escritas de testigos o terceros relacionados', 'Testimonios escritos de terceros'),
 
     -- Evidencias Adicionales
-    --(6, 'Copias de artículos relevantes de leyes o reglamentos aplicables al caso', 'Material legal adicional'),
+    --(6, 'Copias de artï¿½culos relevantes de leyes o reglamentos aplicables al caso', 'Material legal adicional'),
     --(6, 'Jurisprudencia que respalde los argumentos legales', 'Casos legales previos relevantes al caso'),
     --(6, 'Opiniones legales emitidas por especialistas o expertos externos', 'Consultas con expertos legales'),
-    --(6, 'Reglamentos internos de instituciones relacionadas', 'Reglamentos específicos relevantes'),
+    --(6, 'Reglamentos internos de instituciones relacionadas', 'Reglamentos especï¿½ficos relevantes'),
     --(6, 'Tratados internacionales', 'Acuerdos internacionales aplicables'),
 
     -- Correspondencia Oficial
     (7, 'Cartas enviadas al juzgado, contrapartes, o terceros', 'Cartas oficiales relacionadas al caso'),
-    (7, 'Notificaciones enviadas o recibidas por correo o mensajería', 'Notificaciones entregadas por correo'),
+    (7, 'Notificaciones enviadas o recibidas por correo o mensajerï¿½a', 'Notificaciones entregadas por correo'),
     (7, 'Actas de reuniones con las partes o autoridades', 'Actas oficiales de reuniones'),
-    (7, 'Correos electrónicos relacionados con el caso', 'Evidencia de comunicación electrónica'),
-    (7, 'Constancias de entrega y recepción de documentos', 'Comprobantes de entrega y recepción de documentos'),
+    (7, 'Correos electrï¿½nicos relacionados con el caso', 'Evidencia de comunicaciï¿½n electrï¿½nica'),
+    (7, 'Constancias de entrega y recepciï¿½n de documentos', 'Comprobantes de entrega y recepciï¿½n de documentos'),
 
     -- Referencias Legales
-    (8, 'Copias de artículos relevantes de leyes o reglamentos aplicables en caso', 'Material legal adicional'),
+    (8, 'Copias de artï¿½culos relevantes de leyes o reglamentos aplicables en caso', 'Material legal adicional'),
     (8, 'Jurisprudencia que respalde los argumentos legales', 'Casos legales previos relevantes al caso'),
     (8, 'Opiniones legales emitidas por especialistas o expertos externos', 'Consultas con expertos legales'),
-    (8, 'Reglamentos internos de instituciones relacionadas', 'Reglamentos específicos relevantes'),
+    (8, 'Reglamentos internos de instituciones relacionadas', 'Reglamentos especï¿½ficos relevantes'),
     (8, 'Tratados internacionales', 'Acuerdos internacionales aplicables');
 
 
@@ -282,8 +282,8 @@ INSERT INTO tblParteDemandante (
     representanteLegalCorreo
 )
 VALUES 
-    (1, 'Demandante', 'Pedro López', 'ABC123456', '1980-01-01', 'Calle Principal 123', '5555555555', 
-    'pedro@example.com', 'Juan Pérez', 'XYZ987654', '5555555555', 'juan.perez@example.com');
+    (1, 'Demandante', 'Pedro Lï¿½pez', 'ABC123456', '1980-01-01', 'Calle Principal 123', '5555555555', 
+    'pedro@example.com', 'Juan Pï¿½rez', 'XYZ987654', '5555555555', 'juan.perez@example.com');
 
 -- Insertar datos en tblParteDemandada
 INSERT INTO tblParteDemandada (
@@ -292,8 +292,8 @@ INSERT INTO tblParteDemandada (
     representanteLegalCorreo
 )
 VALUES 
-    (1, 'Demandado', 'Laura Martínez', 'DEF789012', '1990-05-15', 'Avenida Secundaria 456', '4444444444', 
-    'laura@example.com', 'Carlos López', 'GHI123789', '4444444444', 'carlos.lopez@example.com');
+    (1, 'Demandado', 'Laura Martï¿½nez', 'DEF789012', '1990-05-15', 'Avenida Secundaria 456', '4444444444', 
+    'laura@example.com', 'Carlos Lï¿½pez', 'GHI123789', '4444444444', 'carlos.lopez@example.com');
 
 -- Insertar datos en tblTercerosRelacionados
 INSERT INTO tblTercerosRelacionados (
@@ -301,7 +301,7 @@ INSERT INTO tblTercerosRelacionados (
     telefono, correo
 )
 VALUES 
-    (1, 'Testigo', 'Ana Gómez', 'JKL456123', '1985-03-10', 'Calle Tercera 789', '3333333333', 
+    (1, 'Testigo', 'Ana Gï¿½mez', 'JKL456123', '1985-03-10', 'Calle Tercera 789', '3333333333', 
     'ana.gomez@example.com');
 
 
@@ -407,7 +407,7 @@ JOIN
 JOIN 
     tblExpediente Expediente ON Cliente.idCliente = Expediente.idClienteFK
 WHERE 
-    Expediente.numeroExpediente = 'EXP0001'; -- Reemplaza 'EXP0001' con el número de expediente necesario
+    Expediente.numeroExpediente = 'EXP0001'; -- Reemplaza 'EXP0001' con el nï¿½mero de expediente necesario
 
 
 SELECT * FROM tblCita

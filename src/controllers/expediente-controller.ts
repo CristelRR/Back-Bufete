@@ -66,13 +66,13 @@ class ExpedienteNController {
     //MÈTODO INFORMACIÒN GENERAL POR NUMERO DE EXPEDIENTE
     async informacionGeneral(req: Request, res: Response) {
         try {
-            const { numeroExpediente } = req.params; // Obtener el número de expediente de los parámetros de la URL
+            const { idExpediente } = req.params; // Obtener el número de expediente de los parámetros de la URL
 
-            if (!numeroExpediente) {
+            if (!idExpediente) {
                 return res.status(400).json({ message: "El número de expediente es requerido" });
             }
 
-            const expediente = await expedienteNModel.informacionGeneral(numeroExpediente);
+            const expediente = await expedienteNModel.informacionGeneral(idExpediente);
 
             if (!expediente) {
                 return res.status(404).json({ message: "Expediente no encontrado" });
@@ -88,12 +88,12 @@ class ExpedienteNController {
     
     async obtenerPartes(req: Request, res: Response) {
         try {
-            const { numeroExpediente } = req.params; // Obtener número de expediente desde los parámetros
-            if (!numeroExpediente) {
+            const { idExpediente } = req.params; // Obtener número de expediente desde los parámetros
+            if (!idExpediente) {
                 return res.status(400).json({ message: 'El número de expediente es requerido.' });
             }
     
-            const partes = await expedienteNModel.getPartesPorExpediente(numeroExpediente);
+            const partes = await expedienteNModel.getPartesPorExpediente(idExpediente);
             if (!partes || partes.length === 0) {
                 return res.status(404).json({ message: 'No se encontraron partes relacionadas con este expediente.' });
             }
@@ -101,6 +101,36 @@ class ExpedienteNController {
             res.json(partes); // Enviar las partes como respuesta
         } catch (error) {
             console.error('Error al obtener las partes del expediente:', error);
+            res.status(500).json({ message: 'Error interno del servidor.' });
+        }
+    }
+
+    async agregarParte(req: Request, res: Response) {
+        try {
+            const { tipoParte, parteData } = req.body; // Recibe tipoParte y datos de la parte
+
+            if (!tipoParte || !parteData) {
+                return res.status(400).json({ message: 'Tipo de parte y datos son requeridos.' });
+            }
+
+            let result;
+            switch (tipoParte) {
+                case 'Demandante':
+                    result = await expedienteNModel.agregarParteDemandante(parteData);
+                    break;
+                case 'Demandado':
+                    result = await expedienteNModel.agregarParteDemandada(parteData);
+                    break;
+                case 'Tercero':
+                    result = await expedienteNModel.agregarTerceroRelacionado(parteData);
+                    break;
+                default:
+                    return res.status(400).json({ message: 'Tipo de parte no válido.' });
+            }
+
+            res.status(201).json({ message: 'Parte agregada exitosamente.', result });
+        } catch (error) {
+            console.error('Error al agregar parte:', error);
             res.status(500).json({ message: 'Error interno del servidor.' });
         }
     }

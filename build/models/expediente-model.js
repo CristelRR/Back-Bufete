@@ -29,7 +29,7 @@ class ExpedienteNModel {
                 .input('idClienteFK', expedienteData.idClienteFK)
                 .input('idEmpleadoFK', expedienteData.idEmpleadoFK)
                 .query(`
-                INSERT INTO tblExpediente (numeroExpediente, estado, descripcion, nombreExpediente, idClienteFK, idEmpleadoFK) 
+                 INSERT INTO tblExpediente (numeroExpediente , estado , descripcion , nombreExpediente , idClienteFK , idEmpleadoFK)  
                 VALUES (@numeroExpediente, @estado, @descripcion, @nombreExpediente, @idClienteFK, @idEmpleadoFK)
             `);
             return result;
@@ -80,9 +80,9 @@ class ExpedienteNModel {
                     E.idClienteFK,
                     E.idEmpleadoFK,
                     C.nombreCliente,
-                    C.apellidoCliente,
+                    C.aPCliente,
                     Em.nombreEmpleado,
-                    Em.apellidoEmpleado
+                    Em.aPEmpleado
                 FROM tblExpediente E
                 JOIN tblCliente C ON E.idClienteFK = C.idCliente
                 JOIN tblEmpleado Em ON E.idEmpleadoFK = Em.idEmpleado
@@ -92,11 +92,11 @@ class ExpedienteNModel {
         });
     }
     // INFORMACION GENERAL POR NUMERO DE EXPEDIENTE
-    informacionGeneral(numeroExpediente) {
+    informacionGeneral(idExpediente) {
         return __awaiter(this, void 0, void 0, function* () {
             const pool = yield (0, db_1.connectDB)();
             const result = yield pool.request()
-                .input('numeroExpediente', numeroExpediente)
+                .input('idExpediente', idExpediente)
                 .query(`
                 SELECT 
                     idExpediente,
@@ -107,16 +107,16 @@ class ExpedienteNModel {
                     fechaApertura, 
                     anioExpediente
                 FROM tblExpediente
-                WHERE numeroExpediente = @numeroExpediente
+                WHERE idExpediente = @idExpediente
             `);
             return result.recordset[0];
         });
     }
-    getPartesPorExpediente(numeroExpediente) {
+    getPartesPorExpediente(idExpediente) {
         return __awaiter(this, void 0, void 0, function* () {
             const pool = yield (0, db_1.connectDB)();
             const result = yield pool.request()
-                .input('numeroExpediente', numeroExpediente)
+                .input('idExpediente', idExpediente)
                 .query(`
                 SELECT 
                     'Demandante' AS tipoParte,
@@ -135,7 +135,7 @@ class ExpedienteNModel {
                 FROM 
                     tblParteDemandante PD
                 WHERE 
-                    PD.idExpedienteFK = (SELECT idExpediente FROM tblExpediente WHERE numeroExpediente = @numeroExpediente)
+                    PD.idExpedienteFK = (SELECT idExpediente FROM tblExpediente WHERE idExpediente = @idExpediente)
     
                 UNION ALL
     
@@ -156,7 +156,7 @@ class ExpedienteNModel {
                 FROM 
                     tblParteDemandada PDM
                 WHERE 
-                    PDM.idExpedienteFK = (SELECT idExpediente FROM tblExpediente WHERE numeroExpediente = @numeroExpediente)
+                    PDM.idExpedienteFK = (SELECT idExpediente FROM tblExpediente WHERE idExpediente = @idExpediente)
     
                 UNION ALL
     
@@ -177,9 +177,80 @@ class ExpedienteNModel {
                 FROM 
                     tblTercerosRelacionados TR
                 WHERE 
-                    TR.idExpedienteFK = (SELECT idExpediente FROM tblExpediente WHERE numeroExpediente = @numeroExpediente);
+                    TR.idExpedienteFK = (SELECT idExpediente FROM tblExpediente WHERE idExpediente = @idExpediente);
             `);
             return result.recordset; // Devuelve los registros de las partes
+        });
+    }
+    agregarParteDemandante(demandanteData) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .input('idExpedienteFK', demandanteData.idExpedienteFK)
+                .input('nombreCompleto', demandanteData.nombreCompleto)
+                .input('relacionCaso', demandanteData.relacionCaso)
+                .input('identificacionOficial', demandanteData.identificacionOficial)
+                .input('fechaNacimiento', demandanteData.fechaNacimiento)
+                .input('domicilio', demandanteData.domicilio)
+                .input('telefono', demandanteData.telefono)
+                .input('correo', demandanteData.correo)
+                .input('representanteLegalNombre', demandanteData.representanteLegalNombre)
+                .input('numeroLicencia', demandanteData.numeroLicencia)
+                .input('representanteLegalTelefono', demandanteData.representanteLegalTelefono)
+                .input('representanteLegalCorreo', demandanteData.representanteLegalCorreo)
+                .query(`
+                INSERT INTO tblParteDemandante 
+                (idExpedienteFK, nombreCompleto, relacionCaso, identificacionOficial, fechaNacimiento, domicilio, telefono, correo, representanteLegalNombre, numeroLicencia, representanteLegalTelefono, representanteLegalCorreo)
+                VALUES 
+                (@idExpedienteFK, @nombreCompleto, @relacionCaso, @identificacionOficial, @fechaNacimiento, @domicilio, @telefono, @correo, @representanteLegalNombre, @numeroLicencia, @representanteLegalTelefono, @representanteLegalCorreo)
+            `);
+            return result;
+        });
+    }
+    agregarParteDemandada(demandadoData) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .input('idExpedienteFK', demandadoData.idExpedienteFK)
+                .input('nombreCompleto', demandadoData.nombreCompleto)
+                .input('relacionCaso', demandadoData.relacionCaso)
+                .input('identificacionOficial', demandadoData.identificacionOficial)
+                .input('fechaNacimiento', demandadoData.fechaNacimiento)
+                .input('domicilio', demandadoData.domicilio)
+                .input('telefono', demandadoData.telefono)
+                .input('correo', demandadoData.correo)
+                .input('representanteLegalNombre', demandadoData.representanteLegalNombre)
+                .input('representanteLegalCedula', demandadoData.representanteLegalCedula)
+                .input('representanteLegalTelefono', demandadoData.representanteLegalTelefono)
+                .input('representanteLegalCorreo', demandadoData.representanteLegalCorreo)
+                .query(`
+                INSERT INTO tblParteDemandada 
+                (idExpedienteFK, nombreCompleto, relacionCaso, identificacionOficial, fechaNacimiento, domicilio, telefono, correo, representanteLegalNombre, representanteLegalCedula, representanteLegalTelefono, representanteLegalCorreo)
+                VALUES 
+                (@idExpedienteFK, @nombreCompleto, @relacionCaso, @identificacionOficial, @fechaNacimiento, @domicilio, @telefono, @correo, @representanteLegalNombre, @representanteLegalCedula, @representanteLegalTelefono, @representanteLegalCorreo)
+            `);
+            return result;
+        });
+    }
+    agregarTerceroRelacionado(terceroData) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .input('idExpedienteFK', terceroData.idExpedienteFK)
+                .input('nombreCompleto', terceroData.nombreCompleto)
+                .input('relacionCaso', terceroData.relacionCaso)
+                .input('identificacionOficial', terceroData.identificacionOficial)
+                .input('fechaNacimiento', terceroData.fechaNacimiento)
+                .input('domicilio', terceroData.domicilio)
+                .input('telefono', terceroData.telefono)
+                .input('correo', terceroData.correo)
+                .query(`
+                INSERT INTO tblTercerosRelacionados 
+                (idExpedienteFK, nombreCompleto, relacionCaso, identificacionOficial, fechaNacimiento, domicilio, telefono, correo)
+                VALUES 
+                (@idExpedienteFK, @nombreCompleto, @relacionCaso, @identificacionOficial, @fechaNacimiento, @domicilio, @telefono, @correo)
+            `);
+            return result;
         });
     }
 }
