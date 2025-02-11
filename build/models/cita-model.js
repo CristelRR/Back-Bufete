@@ -524,11 +524,11 @@ class CitaModel {
         });
     }
     //Método para consutar las citas que pertenecen a un expediente
-    getCitasCompletadasByExpediente(numeroExpediente) {
+    getCitasCompletadasByExpediente(idExpediente) {
         return __awaiter(this, void 0, void 0, function* () {
             const pool = yield (0, db_1.connectDB)();
             const result = yield pool.request()
-                .input('numeroExpediente', numeroExpediente)
+                .input('idExpediente', idExpediente)
                 .query(`
                 SELECT 
                     c.idCita,
@@ -536,7 +536,7 @@ class CitaModel {
                     c.estado AS estadoCita,
                     c.idAgendaFK,
                     c.idServicioFK,
-                    e.numeroExpediente,
+                    e.idExpediente,
                     e.nombreExpediente,
                     cl.idCliente,
                     CONCAT(cl.nombreCliente, ' ', cl.aPCliente, ' ', cl.aMCliente) AS nombreCliente,
@@ -550,7 +550,7 @@ class CitaModel {
                 INNER JOIN 
                     tblCliente AS cl ON e.idClienteFK = cl.idCliente
                 WHERE 
-                    e.numeroExpediente = @numeroExpediente
+                    e.idExpediente = @idExpediente
                     AND c.estado = 'completada';
             `);
             return result.recordset;
