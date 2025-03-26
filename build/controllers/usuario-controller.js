@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.usuarioController = void 0;
 const usuario_model_1 = __importDefault(require("../models/usuario-model"));
+const axios_1 = __importDefault(require("axios"));
 class UsuarioController {
     getUsuarios(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -22,19 +23,26 @@ class UsuarioController {
                 res.json(usuarios);
             }
             catch (error) {
-                console.error('Error al obtener usuarios:', error);
-                res.status(500).json({ message: 'Error al obtener usuarios' });
+                console.error("Error al obtener usuarios:", error);
+                res.status(500).json({ message: "Error al obtener usuarios" });
             }
         });
     }
     login(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { email, password } = req.body;
+                const { email, password, recaptcha } = req.body;
+                console.log("Datos recibidos:", email, password, recaptcha);
+                const secretKey = "6LemDAArAAAAANKFrntBm5gGMtjLGGB9X23Ml-RC";
+                const recaptchaResponse = yield axios_1.default.post("https://www.google.com/recaptcha/api/siteverify", null, { params: { secret: secretKey, response: recaptcha } });
+                console.log("Respuesta reCAPTCHA:", recaptchaResponse.data);
+                if (!recaptchaResponse.data.success) {
+                    return res.status(400).json({ message: "reCAPTCHA inválido" });
+                }
                 const usuario = yield usuario_model_1.default.findByEmail(email);
                 if (usuario && usuario.pass === password) {
-                    res.json({
-                        message: 'Inicio de sesión exitoso',
+                    return res.json({
+                        message: "Inicio de sesión exitoso",
                         usuario: {
                             id: usuario.idUsuario,
                             nombre: usuario.nombreUsuario,
@@ -44,13 +52,11 @@ class UsuarioController {
                         }
                     });
                 }
-                else {
-                    res.status(401).json({ message: 'Credenciales incorrectas' });
-                }
+                res.status(401).json({ message: "Credenciales incorrectas" });
             }
             catch (error) {
-                console.error('Error al iniciar sesión:', error);
-                res.status(500).json({ message: 'Error al iniciar sesión' });
+                console.error("Error al iniciar sesión:", error);
+                res.status(500).json({ message: "Error al iniciar sesión" });
             }
         });
     }
@@ -59,11 +65,11 @@ class UsuarioController {
             try {
                 const usuarioData = req.body; // Asegúrate de validar los datos aquí
                 yield usuario_model_1.default.crearUsuario(usuarioData);
-                res.status(201).json({ message: 'Usuario creado exitosamente' });
+                res.status(201).json({ message: "Usuario creado exitosamente" });
             }
             catch (error) {
-                console.error('Error al crear usuario:', error);
-                res.status(500).json({ message: 'Error al crear usuario' });
+                console.error("Error al crear usuario:", error);
+                res.status(500).json({ message: "Error al crear usuario" });
             }
         });
     }
@@ -72,11 +78,11 @@ class UsuarioController {
             try {
                 const usuarioData = req.body; // Asegúrate de validar los datos aquí
                 yield usuario_model_1.default.updateUsuario(usuarioData);
-                res.json({ message: 'Usuario actualizado exitosamente' });
+                res.json({ message: "Usuario actualizado exitosamente" });
             }
             catch (error) {
-                console.error('Error al actualizar usuario:', error);
-                res.status(500).json({ message: 'Error al actualizar usuario' });
+                console.error("Error al actualizar usuario:", error);
+                res.status(500).json({ message: "Error al actualizar usuario" });
             }
         });
     }
@@ -85,11 +91,11 @@ class UsuarioController {
             try {
                 const { idUsuario } = req.body; // Asegúrate de validar el ID aquí
                 yield usuario_model_1.default.deleteUsuario(idUsuario);
-                res.json({ message: 'Usuario eliminado exitosamente' });
+                res.json({ message: "Usuario eliminado exitosamente" });
             }
             catch (error) {
-                console.error('Error al eliminar usuario:', error);
-                res.status(500).json({ message: 'Error al eliminar usuario' });
+                console.error("Error al eliminar usuario:", error);
+                res.status(500).json({ message: "Error al eliminar usuario" });
             }
         });
     }

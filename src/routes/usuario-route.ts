@@ -14,6 +14,7 @@ class UsuarioRoutes {
         this.router.put('/', usuarioController.updateUsuario);
         this.router.delete('/', usuarioController.deleteUsuario);
         this.router.post('/login', usuarioController.login);
+        
     }
 }
 
