@@ -14,7 +14,10 @@ class UsuarioRoutes {
         this.router.put('/', usuarioController.updateUsuario);
         this.router.delete('/', usuarioController.deleteUsuario);
         this.router.post('/login', usuarioController.login);
-        
+        this.router.post('/verify-otp', usuarioController.verificarOTP); 
+        this.router.post('/recuperar-contrasena', usuarioController.enviarCorreoRecuperacion);
+        this.router.post('/restablecer-contrasena', usuarioController.restablecerContrasena);
+
     }
 }
 

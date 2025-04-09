@@ -13,6 +13,9 @@ class UsuarioRoutes {
         this.router.put('/', usuario_controller_1.usuarioController.updateUsuario);
         this.router.delete('/', usuario_controller_1.usuarioController.deleteUsuario);
         this.router.post('/login', usuario_controller_1.usuarioController.login);
+        this.router.post('/verify-otp', usuario_controller_1.usuarioController.verificarOTP);
+        this.router.post('/recuperar-contrasena', usuario_controller_1.usuarioController.enviarCorreoRecuperacion);
+        this.router.post('/restablecer-contrasena', usuario_controller_1.usuarioController.restablecerContrasena);
     }
 }
 const usuarioRoutes = new UsuarioRoutes();
