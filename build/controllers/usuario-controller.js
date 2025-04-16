@@ -51,6 +51,7 @@ const axios_1 = __importDefault(require("axios"));
 const crypto = __importStar(require("crypto"));
 const mailer_1 = require("../config/mailer");
 const db_1 = require("../config/db");
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 class UsuarioController {
     getUsuarios(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -112,9 +113,10 @@ class UsuarioController {
                 }
                 // Buscar OTP en la BD
                 const pool = yield (0, db_1.connectDB)();
-                const result = yield pool.request()
-                    .input('idUsuarioFK', usuario.idUsuario)
-                    .query('SELECT otp, otpExpiration FROM tblUsuarioOTP WHERE idUsuarioFK = @idUsuarioFK');
+                const result = yield pool
+                    .request()
+                    .input("idUsuarioFK", usuario.idUsuario)
+                    .query("SELECT otp, otpExpiration FROM tblUsuarioOTP WHERE idUsuarioFK = @idUsuarioFK");
                 if (result.recordset.length === 0) {
                     return res.status(400).json({ message: "OTP no encontrado" });
                 }
@@ -128,9 +130,20 @@ class UsuarioController {
                 }
                 // Limpiar OTP de la BD (opcional)
                 yield usuario_model_1.default.deleteOTP(usuario.idUsuario);
+                // Se genera el token con expiracion
+                const token = jsonwebtoken_1.default.sign({
+                    id: usuario.idUsuario,
+                    rol: usuario.idRolFK,
+                    idEmpleado: usuario.idEmpleadoFK,
+                    idCliente: usuario.idClienteFK,
+                }, "CLAVE_SECRETA_SUPERSEGURA", 
+                //{ expiresIn: "30m" } // Token expira en 30 minutos
+                { expiresIn: "50s" } //Expiracion de prueba
+                );
                 // Enviar respuesta con datos del usuario
                 res.json({
                     message: "OTP verificado correctamente",
+                    token,
                     usuario: {
                         id: usuario.idUsuario,
                         nombre: usuario.nombreUsuario,
@@ -236,7 +249,9 @@ class UsuarioController {
             }
             catch (error) {
                 console.error("Error al restablecer contraseña:", error);
-                res.status(500).json({ message: "Error interno al restablecer contraseña" });
+                res
+                    .status(500)
+                    .json({ message: "Error interno al restablecer contraseña" });
             }
         });
     }
