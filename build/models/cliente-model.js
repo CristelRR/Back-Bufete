@@ -27,6 +27,16 @@ class ClienteModel {
             return result.recordset;
         });
     }
+    // Método para verificar si el correo ya está registrado
+    verificarCorreoExistente(correo) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .input('correo', correo)
+                .query('SELECT * FROM tblCliente WHERE correo = @correo');
+            return result.recordset.length > 0; // Si existen registros, significa que el correo ya está registrado
+        });
+    }
     crearCliente(clienteData) {
         return __awaiter(this, void 0, void 0, function* () {
             const pool = yield (0, db_1.connectDB)();

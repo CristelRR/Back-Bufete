@@ -138,7 +138,7 @@ class UsuarioController {
                     idCliente: usuario.idClienteFK,
                 }, "CLAVE_SECRETA_SUPERSEGURA", 
                 //{ expiresIn: "30m" } // Token expira en 30 minutos
-                { expiresIn: "50s" } //Expiracion de prueba
+                { expiresIn: "30m" } //Expiracion de prueba
                 );
                 // Enviar respuesta con datos del usuario
                 res.json({
@@ -209,7 +209,8 @@ class UsuarioController {
                 const token = crypto.randomBytes(32).toString("hex");
                 const expiration = Date.now() + 15 * 60 * 1000; // 15 minutos
                 yield usuario_model_1.default.guardarTokenRecuperacion(usuario.idUsuario, token, expiration);
-                const link = `http://localhost:4200/restablecer-contrasena/${token}`;
+                //const link = `http://localhost:4200/restablecer-contrasena/${token}`;
+                const link = `https://lexvargas-bufet.web.app/restablecer-contrasena/${token}`;
                 // El enlace se envía con el token
                 yield (0, mailer_1.enviarCorreo)(email, "Recuperación de Contraseña", `<p>Haz clic en el siguiente enlace para restablecer tu contraseña:</p>
    <a href="${link}">${link}</a>
