@@ -15,6 +15,14 @@ class ClienteModel {
         return result.recordset; 
     }
     
+     // Método para verificar si el correo ya está registrado
+     async verificarCorreoExistente(correo: string) {
+        const pool = await connectDB();
+        const result = await pool.request()
+            .input('correo', correo)
+            .query('SELECT * FROM tblCliente WHERE correo = @correo');
+        return result.recordset.length > 0; // Si existen registros, significa que el correo ya está registrado
+    }
     
     async crearCliente(clienteData: any) {
         const pool = await connectDB();
@@ -32,7 +40,7 @@ class ClienteModel {
                 (nombreCliente, aPCliente, aMCliente, direccion, correo, telefono, pass, idRolFK) 
                 VALUES (@nombreCliente, @aPCliente, @aMCliente, @direccion, @correo, @telefono, @pass, @idRolFK)
             `);
-        return result;
+        return result; 
     }
 
     async updateCliente(idCliente: number, clienteData: any) {

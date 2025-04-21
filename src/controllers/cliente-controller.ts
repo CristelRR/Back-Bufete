@@ -14,8 +14,16 @@ class ClienteController {
 
     async crearCliente(req: Request, res: Response) {
         try {
-            const clienteData = req.body; // Asegúrate de validar los datos aquí
-            await clienteModel.crearCliente(clienteData);
+            const { correo, ...restoDeDatos } = req.body; // Obtén el correo y el resto de los datos del cliente
+
+            // Verificar si el correo ya existe en la base de datos
+            const correoExistente = await clienteModel.verificarCorreoExistente(correo);
+            if (correoExistente) {
+                return res.status(400).json({ message: 'Este correo ya está registrado.' });
+            }
+
+            // Si el correo no existe, crear el cliente
+            await clienteModel.crearCliente(req.body);
             res.status(201).json({ message: 'Cliente creado exitosamente' });
         } catch (error) {
             console.error('Error al crear cliente:', error);

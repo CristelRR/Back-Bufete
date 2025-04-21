@@ -8,6 +8,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -49,8 +60,14 @@ class ClienteController {
     crearCliente(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const clienteData = req.body; // Asegúrate de validar los datos aquí
-                yield cliente_model_1.default.crearCliente(clienteData);
+                const _a = req.body, { correo } = _a, restoDeDatos = __rest(_a, ["correo"]); // Obtén el correo y el resto de los datos del cliente
+                // Verificar si el correo ya existe en la base de datos
+                const correoExistente = yield cliente_model_1.default.verificarCorreoExistente(correo);
+                if (correoExistente) {
+                    return res.status(400).json({ message: 'Este correo ya está registrado.' });
+                }
+                // Si el correo no existe, crear el cliente
+                yield cliente_model_1.default.crearCliente(req.body);
                 res.status(201).json({ message: 'Cliente creado exitosamente' });
             }
             catch (error) {
