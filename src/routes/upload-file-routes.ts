@@ -20,6 +20,11 @@ class ExpedienteRoutes {
         this.router.get('/:idExpediente', expedienteController.obtenerExpediente);
         this.router.delete('/:idExpediente', expedienteController.eliminarExpediente);
         this.router.put('/:idExpediente', expedienteController.actualizarExpediente);
+        this.router.put('/audiencias', expedienteController.programarAudiencia);
+        this.router.post('/audiencias', expedienteController.programarAudiencia);
+        this.router.get('/:idExpediente/audiencias', expedienteController.obtenerAudiencias);
+        this.router.put('/:idExpediente/proxima-audiencia', expedienteController.actualizarProximaAudiencia);
+        
     }
 }
 

@@ -21,6 +21,10 @@ class ExpedienteRoutes {
         this.router.get('/:idExpediente', upload_file_controllers_1.expedienteController.obtenerExpediente);
         this.router.delete('/:idExpediente', upload_file_controllers_1.expedienteController.eliminarExpediente);
         this.router.put('/:idExpediente', upload_file_controllers_1.expedienteController.actualizarExpediente);
+        this.router.put('/audiencias', upload_file_controllers_1.expedienteController.programarAudiencia);
+        this.router.post('/audiencias', upload_file_controllers_1.expedienteController.programarAudiencia);
+        this.router.get('/:idExpediente/audiencias', upload_file_controllers_1.expedienteController.obtenerAudiencias);
+        this.router.put('/:idExpediente/proxima-audiencia', upload_file_controllers_1.expedienteController.actualizarProximaAudiencia);
     }
 }
 const expedienteRoutes = new ExpedienteRoutes();

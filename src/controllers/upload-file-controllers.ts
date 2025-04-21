@@ -13,7 +13,214 @@ if (!fs.existsSync(uploadDir)) {
 
 class ExpedienteController {
 
+    async actualizarProximaAudiencia(req: Request, res: Response): Promise<void> {
+        try {
+            const { idExpediente } = req.params;
+            const { fecha } = req.body;
     
+            if (!idExpediente || !fecha) {
+                res.status(400).json({ 
+                    success: false,
+                    message: 'Faltan parámetros requeridos: idExpediente y fecha'
+                });
+                return;
+            }
+    
+            const pool = await connectDB();
+            
+            // 1. Verificar si las columnas existen
+            const columnCheck = await pool.request()
+                .query(`
+                    SELECT COLUMN_NAME 
+                    FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_NAME = 'tblExpediente' 
+                    AND COLUMN_NAME IN ('proximaAudiencia', 'ultimaActualizacion')
+                `);
+    
+            const columnsExist = columnCheck.recordset.length >= 2;
+            
+            if (!columnsExist) {
+                res.status(500).json({
+                    success: false,
+                    message: 'Las columnas necesarias no existen en la tabla',
+                    requiredColumns: ['proximaAudiencia', 'ultimaActualizacion']
+                });
+                return;
+            }
+    
+            // 2. Verificar si el expediente existe
+            const expedienteResult = await pool.request()
+                .input('idExpediente', idExpediente)
+                .query('SELECT idExpediente FROM tblExpediente WHERE idExpediente = @idExpediente');
+    
+            if (expedienteResult.recordset.length === 0) {
+                res.status(404).json({
+                    success: false,
+                    message: 'Expediente no encontrado'
+                });
+                return;
+            }
+    
+            // 3. Actualizar la próxima audiencia
+            const updateResult = await pool.request()
+                .input('idExpediente', idExpediente)
+                .input('fecha', new Date(fecha))
+                .query(`
+                    UPDATE tblExpediente 
+                    SET 
+                        proximaAudiencia = @fecha,
+                        ultimaActualizacion = GETDATE()
+                    WHERE idExpediente = @idExpediente;
+                    
+                    SELECT 
+                        idExpediente,
+                        numeroExpediente,
+                        nombreExpediente,
+                        proximaAudiencia,
+                        ultimaActualizacion
+                    FROM tblExpediente
+                    WHERE idExpediente = @idExpediente;
+                `);
+    
+            res.status(200).json({
+                success: true,
+                message: 'Próxima audiencia actualizada correctamente',
+                data: updateResult.recordset[0]
+            });
+    
+        } catch (error) {
+            const err = error as Error; // <-- Aquí haces el cast
+        
+            console.error('Error en actualizarProximaAudiencia:', err);
+        
+            // Manejo específico para errores de columna faltante
+            if (err.message.includes('Invalid column name')) {
+                res.status(500).json({
+                    success: false,
+                    message: 'Error de configuración de base de datos',
+                    details: 'Faltan columnas requeridas en la tabla de expedientes',
+                    solution: 'Ejecute el script ALTER TABLE para agregar las columnas necesarias'
+                });
+            } else {
+                res.status(500).json({
+                    success: false,
+                    message: 'Error al actualizar la próxima audiencia',
+                    error: err.message
+                });
+            }}
+    }
+
+    async programarAudiencia(req: Request, res: Response): Promise<void> {
+        try {
+            const { idExpediente, fechaHora, tipoAudiencia, sala, observaciones } = req.body;
+    
+            if (!idExpediente || !fechaHora || !tipoAudiencia) {
+                res.status(400).json({ error: 'Faltan campos obligatorios' });
+                return;
+            }
+    
+            const pool = await connectDB();
+            
+            // Iniciar transacción
+            const transaction = pool.transaction();
+            await transaction.begin();
+            
+            try {
+                // 1. Insertar la nueva audiencia
+                const result = await transaction.request()
+                    .input('idExpedienteFK', idExpediente)
+                    .input('fechaHora', new Date(fechaHora))
+                    .input('tipoAudiencia', tipoAudiencia)
+                    .input('sala', sala || null)
+                    .input('observaciones', observaciones || null)
+                    .query(`
+                        INSERT INTO tblAudiencias 
+                        (idExpedienteFK, fechaHora, tipoAudiencia, sala, estado, observaciones)
+                        VALUES 
+                        (@idExpedienteFK, @fechaHora, @tipoAudiencia, @sala, 'Programada', @observaciones);
+                        
+                        SELECT SCOPE_IDENTITY() AS idAudiencia;
+                    `);
+    
+                // 2. Actualizar última actualización del expediente
+                await transaction.request()
+                    .input('idExpediente', idExpediente)
+                    .query(`
+                        UPDATE tblExpediente 
+                        SET ultimaActualizacion = GETDATE()
+                        WHERE idExpediente = @idExpediente;
+                    `);
+    
+                // 3. Obtener el expediente actualizado con todas sus audiencias
+                const expedienteResult = await transaction.request()
+                    .input('idExpediente', idExpediente)
+                    .query(`
+                        SELECT 
+                            e.*,
+                            (SELECT TOP 1 a.fechaHora 
+                             FROM tblAudiencias a 
+                             WHERE a.idExpedienteFK = e.idExpediente 
+                             AND (a.estado = 'Programada' OR a.estado = 'Aplazada')
+                             AS proximaAudiencia
+                        FROM tblExpediente e
+                        WHERE e.idExpediente = @idExpediente;
+                    `);
+    
+                await transaction.commit();
+    
+                res.status(200).json({ 
+                    message: 'Audiencia programada correctamente',
+                    idAudiencia: result.recordset[0].idAudiencia,
+                    expediente: expedienteResult.recordset[0]
+                });
+            } catch (error) {
+                await transaction.rollback();
+                throw error;
+            }
+        } catch (error) {
+            let errorMessage = 'Error desconocido';
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            }
+        
+            console.error('Error en actualizarProximaAudiencia:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al actualizar la próxima audiencia',
+                error: errorMessage
+            });
+        }
+        
+    }
+    
+    // Método para obtener audiencias de un expediente
+    async obtenerAudiencias(req: Request, res: Response): Promise<void> {
+        try {
+            const { idExpediente } = req.params;
+    
+            if (!idExpediente) {
+                res.status(400).json({ error: 'Falta el ID del expediente' });
+                return;
+            }
+    
+            const pool = await connectDB();
+            const result = await pool.request().query(`
+                SELECT 
+                    idExpediente,
+                    numeroExpediente,
+                    CONVERT(varchar, fechaCreacion, 23) as fechaCreacion,
+                    CONVERT(varchar, ultimaActualizacion, 23) as ultimaActualizacion,
+                    CONVERT(varchar, proximaAudiencia, 23) as proximaAudiencia,
+                    -- otros campos
+                FROM tblExpediente
+            `);
+    
+            res.status(200).json(result.recordset);
+        } catch (error) {
+            console.error('Error al obtener audiencias:', error);
+            res.status(500).json({ error: 'Error al obtener las audiencias' });
+        }
+    }
 
     async obtenerExpedienteCompleto(req: Request, res: Response): Promise<void> {
         try {
@@ -120,7 +327,7 @@ class ExpedienteController {
         try {
             const pool = await connectDB();
             
-            // Consulta SQL para obtener expedientes con sus documentos
+            // Consulta SQL para obtener expedientes con sus documentos y audiencias
             const query = `
                 SELECT 
                     e.idExpediente,
@@ -131,17 +338,26 @@ class ExpedienteController {
                     e.nombreExpediente,
                     e.datosAbogado,
                     e.datosCliente,
+                    e.ultimaActualizacion,
                     d.idDocumento,
                     d.documentoBase64,
                     d.fechaSubida,
                     d.estado AS estadoDocumento,
-                    td.tipoDocumento
+                    td.tipoDocumento,
+                    a.idAudiencia,
+                    a.fechaHora AS fechaAudiencia,
+                    a.tipoAudiencia,
+                    a.sala,
+                    a.estado AS estadoAudiencia,
+                    a.observaciones
                 FROM 
                     tblExpediente e
                 LEFT JOIN 
                     tblDocumentosExpediente d ON e.idExpediente = d.idExpedienteFK
                 LEFT JOIN 
                     tblTipoDocumento td ON d.idTipoDocumentoFK = td.idTipoDocumento
+                LEFT JOIN
+                    tblAudiencias a ON e.idExpediente = a.idExpedienteFK
                 ORDER BY 
                     CASE 
                         WHEN e.estado = 'Prioridad Alta' THEN 1
@@ -152,7 +368,7 @@ class ExpedienteController {
             
             const result = await pool.request().query(query);
             
-            // Mapeamos los expedientes y sus documentos
+            // Mapeamos los expedientes, documentos y audiencias
             const expedientesMap = new Map();
     
             result.recordset.forEach((row: any) => {
@@ -168,12 +384,17 @@ class ExpedienteController {
                         nombreExpediente: row.nombreExpediente,
                         datosAbogado: row.datosAbogado,
                         datosCliente: row.datosCliente,
-                        documentos: []
+                        ultimaActualizacion: row.ultimaActualizacion,
+                        documentos: [],
+                        audiencias: []
                     });
                 }
     
-                if (row.idDocumento) {
-                    expedientesMap.get(expedienteId).documentos.push({
+                const expediente = expedientesMap.get(expedienteId);
+    
+                // Agregar documentos si existen
+                if (row.idDocumento && !expediente.documentos.some((d: any) => d.idDocumento === row.idDocumento)) {
+                    expediente.documentos.push({
                         idDocumento: row.idDocumento,
                         documentoBase64: row.documentoBase64,
                         fechaSubida: row.fechaSubida,
@@ -181,10 +402,41 @@ class ExpedienteController {
                         tipoDocumento: row.tipoDocumento
                     });
                 }
+    
+                // Agregar audiencias si existen
+                if (row.idAudiencia && !expediente.audiencias.some((a: any) => a.idAudiencia === row.idAudiencia)) {
+                    expediente.audiencias.push({
+                        idAudiencia: row.idAudiencia,
+                        fechaHora: row.fechaAudiencia,
+                        tipoAudiencia: row.tipoAudiencia,
+                        sala: row.sala,
+                        estado: row.estadoAudiencia,
+                        observaciones: row.observaciones
+                    });
+                }
             });
     
             // Convertimos el mapa en un arreglo de expedientes
             const expedientes = Array.from(expedientesMap.values());
+    
+            // Para cada expediente, determinar la próxima audiencia
+            expedientes.forEach(expediente => {
+                if (expediente.audiencias && expediente.audiencias.length > 0) {
+                    // Ordenar audiencias por fecha (más reciente primero)
+                    expediente.audiencias.sort((a: any, b: any) => new Date(b.fechaHora).getTime() - new Date(a.fechaHora).getTime());
+                    
+                    // Asignar la próxima audiencia (la más reciente programada)
+                    const proximaAudiencia = expediente.audiencias.find((a: any) => 
+                        a.estado === 'Programada' || 
+                        a.estado === 'Aplazada'
+                    );
+                    
+                    
+                    expediente.proximaAudiencia = proximaAudiencia ? proximaAudiencia.fechaHora : null;
+                } else {
+                    expediente.proximaAudiencia = null;
+                }
+            });
     
             res.status(200).json(expedientes);
         } catch (error) {
@@ -307,12 +559,12 @@ class ExpedienteController {
                         INSERT INTO tblExpediente (
                             nombreExpediente, numeroExpediente, estado, descripcion,
                             nombreServicio, datosAbogado, datosCliente,
-                            fechaApertura, idClienteFK, idEmpleadoFK
+                            fechaApertura, idClienteFK, idEmpleadoFK, ultimaActualizacion
                         )
                         VALUES (
                             @nombreExpediente, @numeroExpediente, @estado, @descripcion,
                             @nombreServicio, @datosAbogado, @datosCliente,
-                            @fechaApertura, @idClienteFK, @idEmpleadoFK
+                            @fechaApertura, @idClienteFK, @idEmpleadoFK, GETDATE()
                         );
                         SELECT SCOPE_IDENTITY() AS idExpediente;
                     `);
@@ -577,7 +829,12 @@ class ExpedienteController {
                 .input('nombreExpediente', nombreExpediente || 'Nombre por Defecto')
                 .query(`
                     UPDATE tblExpediente
-                    SET numeroExpediente = @numeroExpediente, estado = @estado, descripcion = @descripcion, nombreExpediente = @nombreExpediente
+                    SET 
+                        numeroExpediente = @numeroExpediente, 
+                        estado = @estado, 
+                        descripcion = @descripcion, 
+                        nombreExpediente = @nombreExpediente,
+                        ultimaActualizacion = GETDATE()
                     WHERE idExpediente = @idExpediente;
                 `);
 
