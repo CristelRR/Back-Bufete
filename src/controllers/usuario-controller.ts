@@ -188,8 +188,8 @@ class UsuarioController {
         expiration
       );
 
-      //const link = `http://localhost:4200/restablecer-contrasena/${token}`;
-      const link = `https://lexvargas-bufet.web.app/restablecer-contrasena/${token}`;
+      const link = `http://localhost:4200/restablecer-contrasena/${token}`;
+      //const link = `https://lexvargas-bufet.web.app/restablecer-contrasena/${token}`;
 
       // El enlace se envía con el token
       await enviarCorreo(
