@@ -167,7 +167,7 @@ class UsuarioController {
   
       await usuarioModel.guardarTokenRecuperacion(usuario.idUsuario, token, expiration);
   
-      const link = `http://localhost:4200/restablecer-contrasena/${token}`;
+      const link = `https://3gwrmhh3-4200.usw3.devtunnels.ms/restablecer-contrasena/${token}  `;
 // El enlace se envía con el token
 await enviarCorreo(
   email,
