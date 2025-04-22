@@ -631,11 +631,13 @@ class ExpedienteController {
                     const documentos = documentosResult.recordset;
                     // Insertar los documentos en tblHistorialDocumentosExpediente
                     for (const documento of documentos) {
+                        const estadoValido = ['Prioridad Alta', 'Archivado', 'En Proceso'];
+                        const estadoDocumento = estadoValido.includes(documento.estado) ? documento.estado : 'Archivado';
                         yield transaction.request()
                             .input('idExpedienteHistorialFK', idHistorialExpediente)
                             .input('idTipoDocumentoFK', documento.idTipoDocumentoFK)
                             .input('fechaSubida', documento.fechaSubida)
-                            .input('estado', documento.estado)
+                            .input('estado', estadoDocumento)
                             .input('documentoBase64', documento.documentoBase64)
                             .query(`
                             INSERT INTO tblHistorialDocumentosExpediente (
