@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { loginController } from "../controllers/login-controllers";
 
 class LoginRoutes {
     public router: Router = Router();
@@ -9,7 +8,6 @@ class LoginRoutes {
     }
 
     config() {
-        this.router.post('/', loginController.loginUser.bind(loginController));
     }
 }
 
