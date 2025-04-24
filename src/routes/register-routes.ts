@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { registerController } from "../controllers/register-controllers";
 
 class RegisterRoutes {
     public router: Router = Router();
@@ -9,8 +8,6 @@ class RegisterRoutes {
     }
 
     config() {
-        this.router.get('/', registerController.getRegister);
-        this.router.post('/', registerController.registerUser);
     }
 }
 
