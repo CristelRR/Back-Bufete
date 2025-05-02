@@ -17,7 +17,7 @@ class UsuarioRoutes {
         this.router.post('/verify-otp', usuarioController.verificarOTP); 
         this.router.post('/recuperar-contrasena', usuarioController.enviarCorreoRecuperacion);
         this.router.post('/restablecer-contrasena', usuarioController.restablecerContrasena);
-
+        this.router.post('/extender-sesion', usuarioController.extenderSesion);
     }
 }
 

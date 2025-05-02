@@ -138,7 +138,7 @@ class UsuarioController {
                     idCliente: usuario.idClienteFK,
                 }, "CLAVE_SECRETA_SUPERSEGURA", 
                 //{ expiresIn: "30m" } // Token expira en 30 minutos
-                { expiresIn: "10m" } //Expiracion de prueba
+                { expiresIn: "30m" } //Expiracion de prueba
                 );
                 // Enviar respuesta con datos del usuario
                 res.json({
@@ -252,6 +252,41 @@ class UsuarioController {
                 res
                     .status(500)
                     .json({ message: "Error interno al restablecer contraseña" });
+            }
+        });
+    }
+    extenderSesion(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            try {
+                const token = (_a = req.headers['authorization']) === null || _a === void 0 ? void 0 : _a.split(' ')[1];
+                if (!token) {
+                    return res.status(400).json({ message: "Token no proporcionado" });
+                }
+                const decoded = jsonwebtoken_1.default.verify(token, 'CLAVE_SECRETA_SUPERSEGURA');
+                // Verificar que decoded es del tipo JwtPayload
+                if (typeof decoded === 'object' && decoded !== null && 'id' in decoded) {
+                    // Ahora podemos acceder a las propiedades de JwtPayload sin error
+                    const nuevaExpiracion = Date.now() + 30 * 60 * 1000; // Añadir 30 minutos
+                    const newToken = jsonwebtoken_1.default.sign({
+                        id: decoded.id, // Asegúrate de hacer el cast a JwtPayload
+                        rol: decoded.rol,
+                        idEmpleado: decoded.idEmpleado,
+                        idCliente: decoded.idCliente,
+                    }, 'CLAVE_SECRETA_SUPERSEGURA', { expiresIn: '30m' } // Expiración extendida de 30 minutos
+                    );
+                    res.json({
+                        message: 'Sesión extendida',
+                        token: newToken,
+                    });
+                }
+                else {
+                    return res.status(400).json({ message: "Token no válido o mal formado" });
+                }
+            }
+            catch (error) {
+                console.error('Error al extender la sesión:', error);
+                res.status(500).json({ message: 'Error al extender la sesión' });
             }
         });
     }
