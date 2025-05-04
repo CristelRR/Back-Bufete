@@ -88,52 +88,59 @@ class ExpedienteNController {
     
     async obtenerPartes(req: Request, res: Response) {
         try {
-            const { idExpediente } = req.params; // Obtener número de expediente desde los parámetros
-            if (!idExpediente) {
-                return res.status(400).json({ message: 'El número de expediente es requerido.' });
-            }
-    
-            const partes = await expedienteNModel.getPartesPorExpediente(idExpediente);
-            if (!partes || partes.length === 0) {
-                return res.status(404).json({ message: 'No se encontraron partes relacionadas con este expediente.' });
-            }
-    
-            res.json(partes); // Enviar las partes como respuesta
+          const { idExpediente } = req.params;
+          if (!idExpediente) {
+            return res.status(400).json({ message: 'El número de expediente es requerido.' });
+          }
+      
+          const partes = await expedienteNModel.getPartesPorExpediente(idExpediente);
+          
+          // Estructurar la respuesta para el frontend
+          const response = {
+            demandantes: partes.filter(p => p.tipo === 'Demandante'),
+            demandados: partes.filter(p => p.tipo === 'Demandado'),
+            terceros: partes.filter(p => p.tipo === 'Tercero')
+          };
+      
+          res.json(response);
         } catch (error) {
-            console.error('Error al obtener las partes del expediente:', error);
-            res.status(500).json({ message: 'Error interno del servidor.' });
+          console.error('Error al obtener las partes del expediente:', error);
+          res.status(500).json({ message: 'Error interno del servidor.' });
         }
-    }
+      }
 
-    async agregarParte(req: Request, res: Response) {
+      async agregarParte(req: Request, res: Response) {
         try {
-            const { tipoParte, parteData } = req.body; // Recibe tipoParte y datos de la parte
-
-            if (!tipoParte || !parteData) {
-                return res.status(400).json({ message: 'Tipo de parte y datos son requeridos.' });
-            }
-
-            let result;
-            switch (tipoParte) {
-                case 'Demandante':
-                    result = await expedienteNModel.agregarParteDemandante(parteData);
-                    break;
-                case 'Demandado':
-                    result = await expedienteNModel.agregarParteDemandada(parteData);
-                    break;
-                case 'Tercero':
-                    result = await expedienteNModel.agregarTerceroRelacionado(parteData);
-                    break;
-                default:
-                    return res.status(400).json({ message: 'Tipo de parte no válido.' });
-            }
-
-            res.status(201).json({ message: 'Parte agregada exitosamente.', result });
+          const { tipoParte, parteData } = req.body;
+      
+          if (!tipoParte || !parteData) {
+            return res.status(400).json({ message: 'Tipo de parte y datos son requeridos.' });
+          }
+      
+          let result;
+          switch (tipoParte) {
+            case 'Demandante':
+              result = await expedienteNModel.agregarParteDemandante(parteData);
+              break;
+            case 'Demandado':
+              result = await expedienteNModel.agregarParteDemandada(parteData);
+              break;
+            case 'Tercero':
+              result = await expedienteNModel.agregarTerceroRelacionado(parteData);
+              break;
+            default:
+              return res.status(400).json({ message: 'Tipo de parte no válido.' });
+          }
+      
+          res.status(201).json({ 
+            message: 'Parte agregada exitosamente.', 
+            parte: result 
+          });
         } catch (error) {
-            console.error('Error al agregar parte:', error);
-            res.status(500).json({ message: 'Error interno del servidor.' });
+          console.error('Error al agregar parte:', error);
+          res.status(500).json({ message: 'Error interno del servidor.' });
         }
-    }
+      }
     
 
 

@@ -183,8 +183,11 @@ class UsuarioController {
       const expiration = Date.now() + 15 * 60 * 1000; // 15 minutos
   
       await usuarioModel.guardarTokenRecuperacion(usuario.idUsuario, token, expiration);
+
   
       const link = `http://localhost:4200/restablecer-contrasena/${token}`;
+
+      //const link = `https://lexvargas-bufet.web.app//restablecer-contrasena/${token}`;
 // El enlace se envía con el token
 await enviarCorreo(
   email,

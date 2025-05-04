@@ -96,10 +96,12 @@ class ExpedienteNModel {
         return result.recordset[0]; 
     }
 
-    async getPartesPorExpediente(idExpediente: number) {
+    async getPartesPorExpediente(idExpediente: number | string) {
         const pool = await connectDB();
+        const id = typeof idExpediente === 'string' ? parseInt(idExpediente) : idExpediente;
+        
         const result = await pool.request()
-            .input('idExpediente', idExpediente)
+            .input('idExpediente', id)
             .query(`
                 SELECT 
                     'Demandante' AS tipoParte,
@@ -112,16 +114,14 @@ class ExpedienteNModel {
                     PD.telefono,
                     PD.correo,
                     PD.representanteLegalNombre,
-                    PD.numeroLicencia AS representanteLegalLicencia,
+                    PD.numeroLicencia,
                     PD.representanteLegalTelefono,
                     PD.representanteLegalCorreo
-                FROM 
-                    tblParteDemandante PD
-                WHERE 
-                    PD.idExpedienteFK = (SELECT idExpediente FROM tblExpediente WHERE idExpediente = @idExpediente)
-    
+                FROM tblParteDemandante PD
+                WHERE PD.idExpedienteFK = @idExpediente
+                
                 UNION ALL
-    
+                
                 SELECT 
                     'Demandado' AS tipoParte,
                     PDM.idParteDemandada AS idParte,
@@ -133,18 +133,16 @@ class ExpedienteNModel {
                     PDM.telefono,
                     PDM.correo,
                     PDM.representanteLegalNombre,
-                    PDM.representanteLegalCedula AS representanteLegalLicencia,
+                    PDM.representanteLegalCedula AS numeroLicencia,
                     PDM.representanteLegalTelefono,
                     PDM.representanteLegalCorreo
-                FROM 
-                    tblParteDemandada PDM
-                WHERE 
-                    PDM.idExpedienteFK = (SELECT idExpediente FROM tblExpediente WHERE idExpediente = @idExpediente)
-    
+                FROM tblParteDemandada PDM
+                WHERE PDM.idExpedienteFK = @idExpediente
+                
                 UNION ALL
-    
+                
                 SELECT 
-                    'Tercero Relacionado' AS tipoParte,
+                    'Tercero' AS tipoParte,
                     TR.idTerceroRelacionado AS idParte,
                     TR.relacionCaso,
                     TR.nombreCompleto,
@@ -154,41 +152,47 @@ class ExpedienteNModel {
                     TR.telefono,
                     TR.correo,
                     NULL AS representanteLegalNombre,
-                    NULL AS representanteLegalLicencia,
+                    NULL AS numeroLicencia,
                     NULL AS representanteLegalTelefono,
                     NULL AS representanteLegalCorreo
-                FROM 
-                    tblTercerosRelacionados TR
-                WHERE 
-                    TR.idExpedienteFK = (SELECT idExpediente FROM tblExpediente WHERE idExpediente = @idExpediente);
+                FROM tblTercerosRelacionados TR
+                WHERE TR.idExpedienteFK = @idExpediente
             `);
-        return result.recordset; // Devuelve los registros de las partes
+        
+        return result.recordset;
     }
+    
 
-    async agregarParteDemandante(demandanteData: any) {
+    async agregarParteDemandante(parteData: any) {
         const pool = await connectDB();
         const result = await pool.request()
-            .input('idExpedienteFK', demandanteData.idExpedienteFK)
-            .input('nombreCompleto', demandanteData.nombreCompleto)
-            .input('relacionCaso', demandanteData.relacionCaso)
-            .input('identificacionOficial', demandanteData.identificacionOficial)
-            .input('fechaNacimiento', demandanteData.fechaNacimiento)
-            .input('domicilio', demandanteData.domicilio)
-            .input('telefono', demandanteData.telefono)
-            .input('correo', demandanteData.correo)
-            .input('representanteLegalNombre', demandanteData.representanteLegalNombre)
-            .input('numeroLicencia', demandanteData.numeroLicencia)
-            .input('representanteLegalTelefono', demandanteData.representanteLegalTelefono)
-            .input('representanteLegalCorreo', demandanteData.representanteLegalCorreo)
+            .input('idExpedienteFK', parteData.idExpedienteFK)
+            .input('nombreCompleto', parteData.nombreCompleto)
+            .input('relacionCaso', parteData.relacionCaso || 'Principal')
+            .input('identificacionOficial', parteData.identificacionOficial)
+            .input('fechaNacimiento', parteData.fechaNacimiento)
+            .input('domicilio', parteData.domicilio)
+            .input('telefono', parteData.telefono)
+            .input('correo', parteData.correo)
+            .input('representanteLegalNombre', parteData.representanteLegalNombre)
+            .input('numeroLicencia', parteData.numeroLicencia || '')
+            .input('representanteLegalTelefono', parteData.representanteLegalTelefono)
+            .input('representanteLegalCorreo', parteData.representanteLegalCorreo)
             .query(`
                 INSERT INTO tblParteDemandante 
-                (idExpedienteFK, nombreCompleto, relacionCaso, identificacionOficial, fechaNacimiento, domicilio, telefono, correo, representanteLegalNombre, numeroLicencia, representanteLegalTelefono, representanteLegalCorreo)
+                (idExpedienteFK, nombreCompleto, relacionCaso, identificacionOficial, fechaNacimiento, 
+                 domicilio, telefono, correo, representanteLegalNombre, numeroLicencia, 
+                 representanteLegalTelefono, representanteLegalCorreo)
                 VALUES 
-                (@idExpedienteFK, @nombreCompleto, @relacionCaso, @identificacionOficial, @fechaNacimiento, @domicilio, @telefono, @correo, @representanteLegalNombre, @numeroLicencia, @representanteLegalTelefono, @representanteLegalCorreo)
+                (@idExpedienteFK, @nombreCompleto, @relacionCaso, @identificacionOficial, @fechaNacimiento, 
+                 @domicilio, @telefono, @correo, @representanteLegalNombre, @numeroLicencia, 
+                 @representanteLegalTelefono, @representanteLegalCorreo);
+                SELECT SCOPE_IDENTITY() AS id;
             `);
-        return result;
+        
+        return result.recordset[0];
     }
-
+    
     async agregarParteDemandada(demandadoData: any) {
         const pool = await connectDB();
         const result = await pool.request()

@@ -106,15 +106,18 @@ class ExpedienteNController {
     obtenerPartes(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { idExpediente } = req.params; // Obtener número de expediente desde los parámetros
+                const { idExpediente } = req.params;
                 if (!idExpediente) {
                     return res.status(400).json({ message: 'El número de expediente es requerido.' });
                 }
                 const partes = yield expediente_model_1.default.getPartesPorExpediente(idExpediente);
-                if (!partes || partes.length === 0) {
-                    return res.status(404).json({ message: 'No se encontraron partes relacionadas con este expediente.' });
-                }
-                res.json(partes); // Enviar las partes como respuesta
+                // Estructurar la respuesta para el frontend
+                const response = {
+                    demandantes: partes.filter(p => p.tipo === 'Demandante'),
+                    demandados: partes.filter(p => p.tipo === 'Demandado'),
+                    terceros: partes.filter(p => p.tipo === 'Tercero')
+                };
+                res.json(response);
             }
             catch (error) {
                 console.error('Error al obtener las partes del expediente:', error);
@@ -125,7 +128,7 @@ class ExpedienteNController {
     agregarParte(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { tipoParte, parteData } = req.body; // Recibe tipoParte y datos de la parte
+                const { tipoParte, parteData } = req.body;
                 if (!tipoParte || !parteData) {
                     return res.status(400).json({ message: 'Tipo de parte y datos son requeridos.' });
                 }
@@ -143,7 +146,10 @@ class ExpedienteNController {
                     default:
                         return res.status(400).json({ message: 'Tipo de parte no válido.' });
                 }
-                res.status(201).json({ message: 'Parte agregada exitosamente.', result });
+                res.status(201).json({
+                    message: 'Parte agregada exitosamente.',
+                    parte: result
+                });
             }
             catch (error) {
                 console.error('Error al agregar parte:', error);

@@ -210,6 +210,7 @@ class UsuarioController {
                 const expiration = Date.now() + 15 * 60 * 1000; // 15 minutos
                 yield usuario_model_1.default.guardarTokenRecuperacion(usuario.idUsuario, token, expiration);
                 const link = `http://localhost:4200/restablecer-contrasena/${token}`;
+                //const link = `https://lexvargas-bufet.web.app//restablecer-contrasena/${token}`;
                 // El enlace se envía con el token
                 yield (0, mailer_1.enviarCorreo)(email, "Recuperación de Contraseña", `<p>Haz clic en el siguiente enlace para restablecer tu contraseña:</p>
    <a href="${link}">${link}</a>
