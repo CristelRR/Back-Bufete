@@ -14,22 +14,31 @@ class ClienteController {
 
     async crearCliente(req: Request, res: Response) {
         try {
-            const { correo, ...restoDeDatos } = req.body; // Obtén el correo y el resto de los datos del cliente
-
-            // Verificar si el correo ya existe en la base de datos
-            const correoExistente = await clienteModel.verificarCorreoExistente(correo);
-            if (correoExistente) {
-                return res.status(400).json({ message: 'Este correo ya está registrado.' });
-            }
-
-            // Si el correo no existe, crear el cliente
-            await clienteModel.crearCliente(req.body);
-            res.status(201).json({ message: 'Cliente creado exitosamente' });
+          const { correo, ...restoDeDatos } = req.body;
+      
+          // Verificar si el correo ya existe
+          const correoExistente = await clienteModel.verificarCorreoExistente(correo);
+          if (correoExistente) {
+            return res.status(400).json({ message: 'Este correo ya está registrado.' });
+          }
+      
+          // Crear cliente
+          await clienteModel.crearCliente(req.body);
+      
+          // Obtener cliente recién creado
+          const clienteCreado = await clienteModel.getClienteByCorreo(correo);
+          if (!clienteCreado) {
+            return res.status(500).json({ message: 'Cliente creado pero no se pudo recuperar.' });
+          }
+      
+          // Devolver cliente creado
+          res.status(201).json(clienteCreado);
         } catch (error) {
-            console.error('Error al crear cliente:', error);
-            res.status(500).json({ message: 'Error al crear cliente' });
+          console.error('Error al crear cliente:', error);
+          res.status(500).json({ message: 'Error al crear cliente' });
         }
-    }
+      }
+      
 
     async updateCliente(req: Request, res: Response) {
         try {
@@ -49,14 +58,19 @@ class ClienteController {
 
     async deleteCliente(req: Request, res: Response) {
         try {
-            const { idCliente } = req.body; // Asegúrate de validar el ID aquí
-            await clienteModel.deleteCliente(idCliente);
-            res.json({ message: 'Cliente eliminado exitosamente' });
+          const idCliente = Number(req.params.idCliente);
+          if (isNaN(idCliente)) {
+            return res.status(400).json({ message: 'ID inválido' });
+          }
+      
+          await clienteModel.deleteCliente(idCliente);
+          res.json({ message: 'Cliente eliminado exitosamente' });
         } catch (error) {
-            console.error('Error al eliminar cliente:', error);
-            res.status(500).json({ message: 'Error al eliminar cliente' });
+          console.error('Error al eliminar cliente:', error);
+          res.status(500).json({ message: 'Error al eliminar cliente' });
         }
-    }
+      }
+      
 
     getClienteById = async (req: Request, res: Response) => {
         try {

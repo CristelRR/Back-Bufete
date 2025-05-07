@@ -255,6 +255,7 @@ class CitaController {
                 // Llama al modelo para obtener todas las citas (en el caso de secretaría)
                 const citas = yield cita_model_1.default.getAllCitas(); // Asegúrate de que el método esté implementado en el modelo
                 res.json(citas); // Devuelve las citas como respuesta
+                console.log(citas);
             }
             catch (error) {
                 console.error('Error al obtener las citas:', error);

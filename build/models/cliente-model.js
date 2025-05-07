@@ -100,6 +100,15 @@ class ClienteModel {
             return result.recordset;
         });
     }
+    getClienteByCorreo(correo) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const pool = yield (0, db_1.connectDB)();
+            const result = yield pool.request()
+                .input('correo', correo)
+                .query('SELECT * FROM tblCliente WHERE correo = @correo');
+            return result.recordset[0];
+        });
+    }
 }
 const clienteModelo = new ClienteModel();
 exports.default = clienteModelo;
