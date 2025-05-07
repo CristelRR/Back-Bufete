@@ -296,7 +296,7 @@ class CitaModel {
                 JOIN 
                     tblServicio S ON C.idServicioFK = S.idServicio
             `);
-
+        console.log(result.recordset);
         return result.recordset;
     }
 

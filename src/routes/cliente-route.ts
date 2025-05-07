@@ -12,7 +12,7 @@ class ClienteRoutes {
         this.router.get('/', clienteController.getClientes);
         this.router.post('/', clienteController.crearCliente);
         this.router.put('/:idCliente', clienteController.updateCliente); 
-        this.router.delete('/', clienteController.deleteCliente);
+        this.router.delete('/:idCliente', clienteController.deleteCliente);
         this.router.get('/:idCliente', clienteController.getClienteById);
     }
 }

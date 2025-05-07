@@ -60,15 +60,21 @@ class ClienteController {
     crearCliente(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const _a = req.body, { correo } = _a, restoDeDatos = __rest(_a, ["correo"]); // Obtén el correo y el resto de los datos del cliente
-                // Verificar si el correo ya existe en la base de datos
+                const _a = req.body, { correo } = _a, restoDeDatos = __rest(_a, ["correo"]);
+                // Verificar si el correo ya existe
                 const correoExistente = yield cliente_model_1.default.verificarCorreoExistente(correo);
                 if (correoExistente) {
                     return res.status(400).json({ message: 'Este correo ya está registrado.' });
                 }
-                // Si el correo no existe, crear el cliente
+                // Crear cliente
                 yield cliente_model_1.default.crearCliente(req.body);
-                res.status(201).json({ message: 'Cliente creado exitosamente' });
+                // Obtener cliente recién creado
+                const clienteCreado = yield cliente_model_1.default.getClienteByCorreo(correo);
+                if (!clienteCreado) {
+                    return res.status(500).json({ message: 'Cliente creado pero no se pudo recuperar.' });
+                }
+                // Devolver cliente creado
+                res.status(201).json(clienteCreado);
             }
             catch (error) {
                 console.error('Error al crear cliente:', error);
@@ -96,7 +102,10 @@ class ClienteController {
     deleteCliente(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { idCliente } = req.body; // Asegúrate de validar el ID aquí
+                const idCliente = Number(req.params.idCliente);
+                if (isNaN(idCliente)) {
+                    return res.status(400).json({ message: 'ID inválido' });
+                }
                 yield cliente_model_1.default.deleteCliente(idCliente);
                 res.json({ message: 'Cliente eliminado exitosamente' });
             }

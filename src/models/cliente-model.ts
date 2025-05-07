@@ -83,7 +83,17 @@ class ClienteModel {
             .query('SELECT * FROM tblCliente WHERE idCliente = @idCliente');
         return result.recordset;
     }
+
+    async getClienteByCorreo(correo: string) {
+        const pool = await connectDB();
+        const result = await pool.request()
+          .input('correo', correo)
+          .query('SELECT * FROM tblCliente WHERE correo = @correo');
+        return result.recordset[0];
+      }
+      
 }
+
 
 const clienteModelo = new ClienteModel();
 export default clienteModelo;
